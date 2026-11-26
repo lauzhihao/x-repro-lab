@@ -35,6 +35,15 @@ try {
   await page.goto(${JSON.stringify(targetUrl)}, { timeout: 60000, waitUntil: "domcontentloaded" });
   await page.waitForSelector('article[data-testid="tweet"], [data-testid="twitterArticleReadView"]', { timeout: 30000 });
   await new Promise(r => setTimeout(r, 1500));
+  const clicked = await page.evaluate(() => {
+    const focal = document.querySelector('article[data-testid="tweet"]');
+    if (!focal) return 0;
+    const btns = [...focal.querySelectorAll('[data-testid="tweet-text-show-more-link"], button, [role="button"]')]
+      .filter(el => !(el.tagName === "A" && el.getAttribute("href")) && /^(显示更多|展开|Show more|查看原文|Show original)$/i.test((el.innerText || "").trim()));
+    for (const b of btns) b.click();
+    return btns.length;
+  });
+  if (clicked > 0) await new Promise(r => setTimeout(r, 1000));
   const data = await page.evaluate(() => {
     const targetId = (${JSON.stringify(targetUrl)}.match(/\\/status\\/(\\d+)/) || [])[1] || "";
     const arts = [...document.querySelectorAll('article[data-testid="tweet"]')].filter(a => !a.closest('[data-testid="twitterArticleReadView"]'));
@@ -92,7 +101,7 @@ export function fetchGithubContext(post) {
     post.article_body || '',
     ...(post.links || []),
     ...(post.context?.linked || []).map((l) => l.url || ''),
-  ].join('\n');
+  ].join('\n').replace(/https?:\/\/\s+/gi, (m) => m.trim());
 
   const matches = [...textPool.matchAll(/https?:\/\/github\.com\/([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)/gi)];
   const repos = [];
