@@ -1,0 +1,57 @@
+{
+  "verdict": "verified_with_numbers",
+  "matches_claim": true,
+  "summary_zh": "在隔离 Docker 容器中完整复现了 toby-bridges/api-relay-audit（933 Stars，AGPL-3.0）的独立脚本下载与本地 Mock 中继审计流程，并核实 arXiv:2611.07650（六位作者均来自加拿大女王大学）在 §III-C 确实引用了该项目。基于 Python 标准库与 curl（零三方依赖），v2.5.0 单文件版与 master 版均可在 21–28 秒内完成 14 步探针并输出合规的 Markdown 与 JSON 报告，面对恶意模拟中继时能够准确捕获包名篡改、错误泄露、SSE 异常及 Web3 私钥诱导并将风险等级由 LOW 升至 HIGH。",
+  "metrics": [
+    {
+      "name": "Quick Start v2.5.0 下载与体积",
+      "claimed": "curl 下载 v2.5.0 单文件 audit.py 并可直接运行",
+      "observed": "HTTP 200，280,587 字节（7,032 行）；master 同版本标签为 286,524 字节（7,151 行）",
+      "note": "无需安装 requirements.txt 中的 httpx 即可独立运行"
+    },
+    {
+      "name": "学术引用核验 (arXiv:2611.07650)",
+      "claimed": "被加拿大女王大学 Queen's University 引用",
+      "observed": "论文 6 位作者均署名 Queen's University，HTML 正文 §III-C 参考文献 [35] 引用本仓库 URL",
+      "note": "仓库自身代码也反向引用该论文 §IV-E"
+    },
+    {
+      "name": "连通性预检 (--connectivity --format json)",
+      "claimed": "快速检测 Anthropic/OpenAI 接口连通性",
+      "observed": "退出码 0，耗时 0.11s，JSON 输出 2,279 字节，Anthropic 与 OpenAI 均返回 OK",
+      "note": "v2.5.0 单文件对正常模拟中继测试"
+    },
+    {
+      "name": "正常模拟中继审计 (general / web3)",
+      "claimed": "生成 Markdown 与 JSON 报告并支持 --profile web3",
+      "observed": "v2.5.0 Markdown 耗时 24.45s（11,549 字节/396 行）；master JSON 耗时 24.51s（14,221 字节，risk_level=LOW，11 flags）；web3 JSON 耗时 27.44s（15,709 字节，14 步全覆盖，risk_level=LOW）",
+      "note": "使用 --fast-context 模式；仅 Step 5 身份测试在无特定预设话术下为 inconclusive"
+    },
+    {
+      "name": "JSON stdout/stderr 分离",
+      "claimed": "不指定 --output 时 stdout 仅输出单个 JSON，进度走 stderr",
+      "observed": "耗时 14.50s，stdout 为 60 行 / 12,345 字节有效 JSON，stderr 为 38 行 / 1,356 字节进度输出",
+      "note": "通过 python3 -m json.tool 校验"
+    },
+    {
+      "name": "篡改模拟中继风险检出 (--profile web3)",
+      "claimed": "检测提示词注入、模型替换信号、上下文截断、SSE 异常、错误泄露及 Web3 风险",
+      "observed": "耗时 21.35s（JSON 21,076 字节）/ 21.42s（MD 17,445 字节），risk_level=HIGH，共 15 条 flags（8 red / 4 yellow / 3 green）",
+      "note": "成功触发包名篡改(1/4)、错误回显、SSE 未知事件与空签名、token 虚报(~245)、提示词泄露、0K/10K 截断及 Web3 注入"
+    }
+  ],
+  "gotchas": [
+    "tag v2.5.0 的 audit.py（7,032 行 / 280,587 字节）与 master 分支（7,151 行 / 286,524 字节）虽版本号同为 2.5.0，但 master 额外包含 _check_event_stream 等修复。",
+    "独立 audit.py 仅需 Python 标准库和 curl，但仓库自带的 tests/ 目录包含 29 个基于 pytest 的测试模块（最小容器中未预装 pytest 会全部导入报错）。",
+    "最小化容器缺少 nslookup 时 Step 1 的 CNAME 检查会输出缺失提示；在毫秒级响应的 localhost 环境下，Step 13 延迟方差探针因微秒级波动易判为 variable（CV=0.26~0.34）。"
+  ],
+  "self_healing_events": [
+    {
+      "issue": "容器镜像 local/claude-tokyo:ubuntu24 未安装 git 与 pytest",
+      "fix": "改用 curl 下载 GitHub tarball 并解压以审查完整源码，并围绕独立运行的 audit.py 构建本地双模式 Mock 中继完成全量端到端验证",
+      "outcome": "成功完成源码审查与全部 6 组端到端审计验证"
+    }
+  ],
+  "quote_candidate_zh": "实测可复现：v2.5.0 单文件靠标准库与 curl 在 24.45 秒内跑通审计，正常中继判 LOW，篡改中继触发 8 项红标判 HIGH，arXiv:2611.07650 确有女王大学引用。",
+  "quote_candidate_en": "Reproduced in Docker: standalone v2.5.0 audit.py runs in 24.45s with zero pip dependencies, scoring a clean mock relay LOW and flagging a tampering relay HIGH (8 red flags), while arXiv:2611.07650 confirms the Queen's University citation."
+}
