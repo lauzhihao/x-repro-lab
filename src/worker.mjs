@@ -8,6 +8,7 @@ import { teardownRun } from './teardown.mjs';
 import { publishRun } from './publisher.mjs';
 
 const SAGY = path.join(os.homedir(), '.local/bin/sagy');
+const AGY = path.join(os.homedir(), '.local/bin/agy');
 
 function buildOrchestratorPrompt({ runId, post, jevData, tmpWorkDir, tmpOutDir, local, execBudgetMin }) {
   const node = jevData.fact_card.proposed_node || 'ubuntu_rtx5060';
@@ -129,68 +130,97 @@ export async function runLabWorker({ runId, post, jevData, decidedAt, skipExecut
       const prompt = buildOrchestratorPrompt({ runId, post, jevData, tmpWorkDir, tmpOutDir, local, execBudgetMin: Math.floor(remainingExecSec / 60) });
       fs.writeFileSync(path.join(runDir, 'plan.md'), `（任务启动于 ${new Date().toISOString()}，节点 \`${node}\`，等待 Orchestrator 写入详细计划...）\n`, 'utf8');
 
-      await new Promise((resolve) => {
-        const args = [
-          'auto',
-          '--model', 'gemini-pro-orchestrator-neon',
-          '--dangerously-skip-permissions',
-          '--disable-slash-commands',
-          '--output-format', 'stream-json',
-          '--print-timeout', `${remainingExecSec}s`,
-          '-p', prompt,
-        ];
-        child = spawn(SAGY, args, {
-          cwd: tmpWorkDir,
-          env: proxyEnv(),
-          detached: true,
-          stdio: ['ignore', 'pipe', 'pipe'],
-        });
+      const msUntilSla = Math.max(1000, deadlineMs - Date.now() - 8 * 60_000);
+      slaTimer = setTimeout(() => requestStop('timed_out'), msUntilSla);
 
-        meta.child_pid = child.pid;
-        meta.child_pgid = child.pid;
-        saveMeta(runDir, meta);
-        registerActiveRun(runId, { pid: process.pid, pgid: child.pid, child_pid: child.pid, node, post_url: meta.post_url, started_at: meta.started_at, deadline_at: meta.deadline_at, run_dir: runDir });
+      const routes = [
+        {
+          bin: AGY,
+          label: 'agy',
+          model: 'gemini-pro-orchestrator-neon',
+          args: ['--model', 'gemini-pro-orchestrator-neon', '--dangerously-skip-permissions', '--disable-slash-commands', '--output-format', 'stream-json', '--print-timeout', `${remainingExecSec}s`, '-p', prompt],
+        },
+        {
+          bin: SAGY,
+          label: 'sagy',
+          model: 'gemini-4-hydrogen-high',
+          args: ['auto', '--model', 'gemini-4-hydrogen-high', '--dangerously-skip-permissions', '--disable-slash-commands', '--output-format', 'stream-json', '--print-timeout', `${remainingExecSec}s`, '-p', prompt],
+        },
+      ];
 
-        const msUntilSla = Math.max(1000, deadlineMs - Date.now() - 8 * 60_000);
-        slaTimer = setTimeout(() => requestStop('timed_out'), msUntilSla);
+      for (let rIdx = 0; rIdx < routes.length; rIdx++) {
+        if (stopReason) break;
+        const route = routes[rIdx];
+        let streamResultStatus = null;
+        appendEvent(runDir, runId, { type: 'executor_attempt', attempt: rIdx + 1, executor_bin: route.label, executor_model: route.model });
+        meta.executor_bin = route.label;
+        meta.executor_model = route.model;
 
-        let buf = '';
-        child.stdout.on('data', (chunk) => {
-          buf += chunk.toString('utf8');
-          const lines = buf.split('\n');
-          buf = lines.pop() || '';
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed) continue;
-            try {
-              const ev = JSON.parse(trimmed);
-              // Track Ego Lite spaceId if Orchestrator prints one
-              const str = trimmed;
-              const m = str.match(/"(?:taskSpaceId|spaceId)"\s*:\s*(\d+)/);
-              if (m) {
-                meta.ego_space_id = Number(m[1]);
-                saveMeta(runDir, meta);
+        await new Promise((resolve) => {
+          child = spawn(route.bin, route.args, {
+            cwd: tmpWorkDir,
+            env: proxyEnv(),
+            detached: true,
+            stdio: ['ignore', 'pipe', 'pipe'],
+          });
+
+          meta.child_pid = child.pid;
+          meta.child_pgid = child.pid;
+          saveMeta(runDir, meta);
+          registerActiveRun(runId, { pid: process.pid, pgid: child.pid, child_pid: child.pid, node, post_url: meta.post_url, started_at: meta.started_at, deadline_at: meta.deadline_at, run_dir: runDir });
+
+          let buf = '';
+          child.stdout.on('data', (chunk) => {
+            buf += chunk.toString('utf8');
+            const lines = buf.split('\n');
+            buf = lines.pop() || '';
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed) continue;
+              try {
+                const ev = JSON.parse(trimmed);
+                if (ev.event === 'result') streamResultStatus = ev.result?.status || null;
+                const m = trimmed.match(/"(?:taskSpaceId|spaceId)"\s*:\s*(\d+)/);
+                if (m) {
+                  meta.ego_space_id = Number(m[1]);
+                  saveMeta(runDir, meta);
+                }
+                appendEvent(runDir, runId, { type: 'orchestrator_event', event: ev });
+              } catch {
+                appendEvent(runDir, runId, { type: 'orchestrator_stdout', text: trimmed.slice(0, 1500) });
               }
-              appendEvent(runDir, runId, { type: 'orchestrator_event', event: ev });
-            } catch {
-              appendEvent(runDir, runId, { type: 'orchestrator_stdout', text: trimmed.slice(0, 1500) });
             }
-          }
+          });
+
+          child.stderr.on('data', (chunk) => {
+            const text = chunk.toString('utf8').trim();
+            if (text) appendEvent(runDir, runId, { type: 'orchestrator_stderr', text: text.slice(0, 1500) });
+          });
+
+          child.on('exit', (code, signal) => {
+            if (buf.trim()) {
+              try {
+                const ev = JSON.parse(buf.trim());
+                if (ev.event === 'result') streamResultStatus = ev.result?.status || null;
+                appendEvent(runDir, runId, { type: 'orchestrator_event', event: ev });
+              } catch {
+                appendEvent(runDir, runId, { type: 'orchestrator_stdout', text: buf.trim().slice(0, 1500) });
+              }
+            }
+            appendEvent(runDir, runId, { type: 'orchestrator_exit', code, signal, stream_result_status: streamResultStatus, executor_bin: route.label, executor_model: route.model });
+            meta.exit_code = code;
+            meta.exit_signal = signal || null;
+            meta.stream_result_status = streamResultStatus;
+            child = null;
+            resolve();
+          });
         });
 
-        child.stderr.on('data', (chunk) => {
-          const text = chunk.toString('utf8').trim();
-          if (text) appendEvent(runDir, runId, { type: 'orchestrator_stderr', text: text.slice(0, 1500) });
-        });
-
-        child.on('exit', (code, signal) => {
-          if (buf.trim()) appendEvent(runDir, runId, { type: 'orchestrator_stdout', text: buf.trim().slice(0, 1500) });
-          appendEvent(runDir, runId, { type: 'orchestrator_exit', code, signal });
-          meta.exit_code = code;
-          meta.exit_signal = signal || null;
-          resolve();
-        });
-      });
+        const hasResultFile = fs.existsSync(path.join(tmpOutDir, 'result.json'));
+        const routeFailed = meta.exit_code !== 0 || streamResultStatus === 'ERROR';
+        if (!routeFailed || hasResultFile || stopReason) break;
+        appendEvent(runDir, runId, { type: 'executor_fallback', from_model: route.model, reason: streamResultStatus || `exit_${meta.exit_code}` });
+      }
     }
 
     // Copy validated artifacts from /tmp/xrl-<runId>/out into runs/<runId>/ before teardown wipes /tmp

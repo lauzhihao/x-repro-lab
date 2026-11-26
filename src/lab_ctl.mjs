@@ -72,9 +72,20 @@ function cmdReplay(runId) {
     const ev = JSON.parse(line);
     if (ev.type === 'orchestrator_event') {
       const inner = ev.event || {};
-      const kind = inner.type || inner.event?.type || 'msg';
-      const summary = inner.message?.content?.[0]?.text || inner.result || inner.subtype || JSON.stringify(inner).slice(0, 160);
-      console.log(`[#${ev.seq} ${ev.ts}] orch:${kind} -> ${String(summary).replace(/\s+/g, ' ').slice(0, 160)}`);
+      const kind = inner.event || inner.type || 'msg';
+      if (kind === 'init') {
+        console.log(`[#${ev.seq} ${ev.ts}] orch:init model=${inner.init?.model || '?'} tools=${inner.init?.tools?.length || 0}`);
+      } else if (kind === 'step_update') {
+        const su = inner.step_update || {};
+        const delta = String(su.text_delta || '').replace(/\s+/g, ' ').slice(0, 120);
+        console.log(`[#${ev.seq} ${ev.ts}] orch:step#${su.step_index ?? '?'} ${su.step_type || ''} ${su.state || ''}${delta ? ' -> ' + delta : ''}`);
+      } else if (kind === 'result') {
+        const rs = inner.result || {};
+        console.log(`[#${ev.seq} ${ev.ts}] orch:result status=${rs.status || '?'} turns=${rs.num_turns ?? '?'} dur=${rs.duration_seconds ?? '?'}s`);
+      } else {
+        const summary = inner.message?.content?.[0]?.text || inner.result || inner.subtype || JSON.stringify(inner).slice(0, 160);
+        console.log(`[#${ev.seq} ${ev.ts}] orch:${kind} -> ${String(summary).replace(/\s+/g, ' ').slice(0, 160)}`);
+      }
     } else {
       const { seq, ts, run_id, type, ...rest } = ev;
       console.log(`[#${seq} ${ts}] ${type} ${JSON.stringify(rest).slice(0, 200)}`);
