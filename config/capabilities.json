@@ -1,0 +1,57 @@
+{
+  "version": "1.0",
+  "sla_minutes": 120,
+  "exec_budget_minutes": 105,
+  "constraints": {
+    "no_paid_cards": true,
+    "no_new_signups": true,
+    "no_focus_stealing": true,
+    "no_captcha_or_risk_control_bypass": true,
+    "require_zero_residue_sandbox": true
+  },
+  "available_nodes": {
+    "ubuntu_rtx5060": {
+      "os": "Ubuntu 24.04 Linux x86_64",
+      "cpu_threads": 16,
+      "ram_gb": 31,
+      "free_disk_gb": 104,
+      "gpu": "NVIDIA RTX 5060 (8GB VRAM)",
+      "isolation": "disposable Docker containers with NVIDIA GPU passthrough",
+      "suitable_for": [
+        "Open-source CLI tools, Python/Node/Rust/Go builds, MCP servers, Dockerized services",
+        "GPU benchmarks and inference fitting inside 8GB VRAM",
+        "General headless automation tests inside ephemeral containers"
+      ]
+    },
+    "orin_64g": {
+      "os": "Ubuntu ARM64 JetPack CUDA 12.6",
+      "cpu_cores": 12,
+      "unified_memory_gb": 61,
+      "gpu": "Integrated Orin CUDA",
+      "isolation": "isolated temp workspace directory without privileged host changes",
+      "suitable_for": [
+        "ARM64 CUDA inference, edge runtime tests, unified-memory benchmarks up to ~40GB"
+      ]
+    },
+    "mac_headless": {
+      "os": "macOS Apple Silicon M1 Max",
+      "unified_memory_gb": 64,
+      "isolation": "headless CLI only; GUI focus stealing strictly forbidden",
+      "suitable_for": [
+        "Apple Silicon MLX inference, Swift/xcodebuild CLI verification, macOS-specific CLI tools"
+      ]
+    },
+    "ego_web_sandbox": {
+      "type": "isolated Chromium profile with zero personal accounts logged in",
+      "suitable_for": [
+        "Public web apps, interactive frontend demos, public pricing/documentation verification"
+      ]
+    },
+    "prompt_cli": {
+      "type": "direct CLI access to frontier LLMs (Gemini, Codex, DeepSeek) and GitHub CLI",
+      "suitable_for": [
+        "Reproducible prompt evaluations, structured output checks, small API/SDK experiments"
+      ]
+    }
+  }
+}

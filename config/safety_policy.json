@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "rules": [
+    {
+      "id": "hardware_danger",
+      "description": "Hardware overclocking, BIOS/firmware flashing, destructive thermal stress, kernel rootkit or unsigned driver tampering",
+      "pattern": "\\b(?:overclock(?:ing)?|undervolt(?:ing)?|flash\\s+(?:bios|uefi|vbios|firmware)|kernel\\s+rootkit|disable\\s+sip|brick\\s+device|burn-?in\\s+stress)\\b|超频|降压超频|刷(?:写)?(?:BIOS|固件|主板)|强烤机|破坏硬件"
+    },
+    {
+      "id": "risk_control_and_tos_abuse",
+      "description": "CAPTCHA bypass, paywall bypass, account farming, automated mass engagement, credential stuffing, or DRM cracking",
+      "pattern": "\\b(?:bypass\\s+(?:captcha|turnstile|cloudflare|paywall|auth|rate[- ]?limit|2fa)|captcha\\s+solver|account\\s+farm(?:ing)?|mass[- ]?(?:follow|like|dm|reply)\\s+bot|credential\\s+stuffing|crack\\s+(?:license|drm|keygen)|pirated\\s+software|free\\s+(?:netflix|spotify|chatgpt\\s+plus)\\s+crack)\\b|过验证码|绕过(?:风控|付费墙|授权|限制|验证码)|批量(?:养号|刷粉|刷赞|刷量|私信)|破解版|激活码生成器|白嫖(?:付费|破解)账号"
+    },
+    {
+      "id": "ethics_security_and_legal_redlines",
+      "description": "Weaponized exploits, malware/ransomware, phishing, private data doxxing, fraud, NSFW, political propaganda, financial scam",
+      "pattern": "\\b(?:ransomware|infostealer|keylogger|phishing\\s+kit|zero-?day\\s+exploit|ddos\\s+attack|rug\\s*pull|pump\\s+and\\s+dump|insider\\s+trading|doxx?(?:ing)?)\\b|勒索病毒|木马|钓鱼(?:套件|网站)|社工库|开盒|人肉搜索|资金盘|拉盘砸盘|荐股|内幕消息|色情|赌博|洗钱"
+    }
+  ]
+}

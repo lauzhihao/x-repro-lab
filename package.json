@@ -1,0 +1,13 @@
+{
+  "name": "x-repro-lab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "JEV-gated reproducible verification ledger for technical X posts",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "ctl": "node src/lab_ctl.mjs"
+  }
+}
