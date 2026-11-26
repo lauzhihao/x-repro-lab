@@ -70,6 +70,7 @@ function buildDynamicReplacements() {
   if (user && user.length >= 4) {
     add(`/Users/${user}`, '[REDACTED_PATH]');
     add(`/home/${user}`, '[REDACTED_PATH]');
+    add(user, '[REDACTED_USER]');
   }
   if (local.nodes?.ubuntu_rtx5060?.ssh_host) add(local.nodes.ubuntu_rtx5060.ssh_host, 'ubuntu-rtx5060');
   if (local.nodes?.orin_64g?.ssh_host) add(local.nodes.orin_64g.ssh_host, 'orin-64g');
