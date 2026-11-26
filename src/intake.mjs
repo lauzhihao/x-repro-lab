@@ -28,7 +28,9 @@ export function fetchTweetViaEgo(url) {
   const local = loadLocalConfig();
   const profileId = local.ego_x_read_profile_id || 'Default';
   const targetUrl = String(url).trim();
+  const outFile = path.join(os.tmpdir(), `xrl-tweet-${process.pid}-${Date.now()}.json`);
   const script = `
+const fs = await import("node:fs/promises");
 const task = await taskSpace("xrl-read-" + Date.now(), { profileId: ${JSON.stringify(profileId)} });
 try {
   const page = task.page("p1");
@@ -78,19 +80,22 @@ try {
       links: [...new Set(links)],
     };
   });
-  console.log("XRL_TWEET_JSON:" + JSON.stringify(data));
+  await fs.writeFile(${JSON.stringify(outFile)}, JSON.stringify(data), "utf8");
 } finally {
   await task.finish({ keep: [] });
 }
 `;
-  const r = spawnSync(EGO, ['nodejs'], { input: script, encoding: 'utf8', timeout: 120000, maxBuffer: 8 * 1024 * 1024 });
-  const marker = (r.stdout || '').split('\n').find((l) => l.startsWith('XRL_TWEET_JSON:'));
-  if (!marker) {
-    throw new Error(`ego-browser failed to read tweet (exit=${r.status}): ${(r.stderr || r.stdout || '').slice(-400)}`);
+  try {
+    const r = spawnSync(EGO, ['nodejs'], { input: script, encoding: 'utf8', timeout: 120000, maxBuffer: 8 * 1024 * 1024 });
+    if (!fs.existsSync(outFile)) {
+      throw new Error(`ego-browser failed to read tweet (exit=${r.status}): ${(r.stderr || r.stdout || '').slice(-400)}`);
+    }
+    const parsed = JSON.parse(fs.readFileSync(outFile, 'utf8'));
+    if (parsed.error) throw new Error(`tweet read error: ${parsed.error}`);
+    return parsed;
+  } finally {
+    try { fs.unlinkSync(outFile); } catch {}
   }
-  const parsed = JSON.parse(marker.slice('XRL_TWEET_JSON:'.length));
-  if (parsed.error) throw new Error(`tweet read error: ${parsed.error}`);
-  return parsed;
 }
 
 export function fetchGithubContext(post) {
