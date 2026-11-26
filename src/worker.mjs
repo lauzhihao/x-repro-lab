@@ -133,7 +133,6 @@ export async function runLabWorker({ runId, post, jevData, decidedAt, skipExecut
         const args = [
           'auto',
           '--model', 'gemini-pro-orchestrator-neon',
-          '--effort', 'high',
           '--dangerously-skip-permissions',
           '--disable-slash-commands',
           '--output-format', 'stream-json',
