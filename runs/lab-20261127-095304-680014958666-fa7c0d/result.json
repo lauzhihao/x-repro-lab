@@ -1,0 +1,67 @@
+{
+  "verdict": "repro_with_gotcha",
+  "matches_claim": true,
+  "what_it_does_zh": "Google Chrome 联合 Edge、Firefox 和 MDN 团队维护的现代 Web 最佳实践技能插件与 CLI，通过紧凑索引、按需语义检索与静态遗留代码扫描，引导 AI 编程智能体优先采用原生现代 Web API 并自动补齐兼容回退方案。",
+  "summary_zh": "在 Node.js v22.23.5 隔离容器中实测已发布的 modern-web-guidance@1.0.2 CLI，search、retrieve、list 与 legacy-scan 均开箱即用，热执行耗时 1.19s–1.57s，SKILL.md 会话常驻摘要仅 904 字节（约 226 tokens），且指南正文确实附带 Baseline 状态与条件 Polyfill 回退代码；源码仓库 255 篇原生指南的 TypeScript 类型检查与 oxlint 静态检查均 0 错误通过，核心 CLI 与 RAG 单元测试 109/109 通过。主要限制在于 install 命令底层依赖 git 克隆仓库导致无 git 精简容器失败、search 仅支持英文查询，以及源码完整打包和全量测试强依赖 git 与 onnxruntime-node 二进制下载。",
+  "highlights": [
+    "上下文开销极低：SKILL.md 常驻 YAML Frontmatter 实测仅 904 字节（108 词 / 约 226 tokens），避免占满上下文；单篇指南超 9.5 KB 时会自动落盘到 /tmp/mwg-guide-*.md 防止 CLI 截断输出。",
+    "检索与静态扫描开箱即用且响应快：search/retrieve/legacy-scan 热启动耗时 1.19s–1.57s，在 4 文件样例工程上 1.5s 内精准定位 4 处遗留模式（::-webkit-scrollbar、max-height 动画、JSON 深拷贝）并附带 keepWhen/dropWhen 误报过滤准则。",
+    "指南质量与回退完备：实测 animate-to-from-top-layer（11,135 字节 / 253 行）涵盖 @starting-style 与 transition-behavior: allow-discrete，同时给出 Baseline 日期、特征检测条件导入及 @supports 降级代码。"
+  ],
+  "metrics": [
+    {
+      "name": "GitHub Stars（源码库 / 分发库）",
+      "claimed": "9.9k Stars",
+      "observed": "11,265（modern-web-guidance-src）/ 26,675（modern-web-guidance）",
+      "note": "截至实测当日均已超过帖文发布时的 9.9k"
+    },
+    {
+      "name": "可用实战指南数量",
+      "claimed": "204 个精简实战案例",
+      "observed": "已发布 CLI list 共 210 条（包内 211 个 .md）；main 源码构建 213 条（guides/ 目录共 255 个 guide.md）",
+      "note": "数量随版本迭代持续增长，源码中位数单篇 6,134 字节（831 词）"
+    },
+    {
+      "name": "SKILL.md 常驻摘要 Token 开销",
+      "claimed": "不怎么占上下文 Token（README 标称 ~205 tokens）",
+      "observed": "Frontmatter 904 字节 / 108 词（约 226 tokens）；完整 SKILL.md 9,807 字节（1,346 词）",
+      "note": "触发前仅常驻 Frontmatter 摘要，命中后再按需调用 CLI"
+    },
+    {
+      "name": "CLI 命令实测耗时（Node v22.23.5）",
+      "claimed": "一行命令装上与轻量调用",
+      "observed": "冷启动 --version 5,987 ms；热启动 search 1,347–1,360 ms；retrieve 1,191 ms；legacy-scan 1,453–1,565 ms",
+      "note": "多次调用稳定在 1.2s–1.6s 区间"
+    },
+    {
+      "name": "legacy-scan 规则覆盖与样例命中",
+      "claimed": "扫描老旧前端模式",
+      "observed": "覆盖 38 个指南 / 52 条确定性规则（约占语料 20%），4 文件样例命中 4 处问题",
+      "note": "支持 --json 结构化输出，附带 keepWhen/dropWhen 校验规则"
+    },
+    {
+      "name": "源码仓库工程检查与核心测试",
+      "claimed": "TypeScript 源码与自动化测试",
+      "observed": "typecheck 0 错误；oxlint 57 ms 内扫描 627 文件 0 错误（2 警告）；核心 CLI+RAG 测试 109 通过 / 0 失败 / 2 跳过（8.56 s）",
+      "note": "全量测试 3,268 项中 3,119 通过、136 失败（失败主要因容器缺 git 及完整校准夹具）"
+    }
+  ],
+  "gotchas": [
+    "install 命令隐含依赖 git：文档仅标明需要 Node.js 22+，但 install 实际调用底层 skills CLI 克隆分发仓库，在无 git 的纯净 node:22-slim 容器中会报 SKILLS_GIT_CLONE_FAILED（spawn git ENOENT）退出码 1。",
+    "search 仅支持英文查询：输入中文关键词（如“弹窗背景动画”）返回空数组 []，并在 stderr 提示必须使用英文检索词。",
+    "legacy-scan 并非全量规则扫描：当前确定性规则仅覆盖 38 个指南（52 条规则，约占全部语料的 20%），官方明确提示其余场景仍需结合 search 命令。",
+    "源码仓库安装与构建陷阱：pnpm install 在 onnxruntime-node@1.30.0 postinstall 阶段因远程构建列表返回 HTTP 302 失败，需加 --ignore-scripts；同时 build-dist.ts 与部分单元测试强依赖 .git 仓库和 git 命令。"
+  ],
+  "self_healing_events": [
+    {
+      "issue": "在 --cap-drop=ALL 容器中以默认 root 身份写入 UID 1000 属主的挂载缓存目录触发 EACCES 权限错误",
+      "fix": "在 docker run 参数中补充 -u $(id -u):$(id -g) 匹配宿主机 UID/GID（1000:1000）",
+      "outcome": "已解决，所有 npx 与文件读写命令正常执行"
+    },
+    {
+      "issue": "源码仓库 pnpm install --frozen-lockfile 在 onnxruntime-node postinstall 拉取构建列表时遇到 HTTP 302 失败并中断 .bin 链接",
+      "fix": "使用 pnpm install --frozen-lockfile --ignore-scripts 完成依赖树与 .bin 可执行文件链接",
+      "outcome": "已解决（530 ms 完成），typecheck、oxlint、build-guides 及核心 CLI/RAG 单元测试全部顺利执行"
+    }
+  ]
+}

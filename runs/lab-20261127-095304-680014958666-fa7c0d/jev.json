@@ -1,0 +1,218 @@
+{
+  "post": {
+    "url": "https://x.com/hisevenih/status/2124391680014958666",
+    "author": "hisevenih",
+    "datetime": "2026-11-22T06:37:00.000Z",
+    "title": "",
+    "text": "谷歌 Chrome 团队估计也是被 AI 写的前端屎山逼急了，直接开源了一套给 Claude Code 用的纠偏插件。\n\n一行命令装上，专门拦住 AI 别再写五年前的老套路，强制优先用最新浏览器原生能力。\n\n他们还每天拿真实浏览器跑 A/B 评测，把大模型本来就会的废话全剪掉，只留 204 个最精简的实战案例。\n\n既不怎么占上下文 Token，还能顺手把老旧代码的降级回退一并配齐，现在已经 9.9k Star 了。\n\n官方中文文档：https://developer.chrome.com/docs/modern-web-guidance?hl=zh-cn…\nGithub：https://github.com/GoogleChrome/modern-web-guidance-src…",
+    "quote_text": "",
+    "article_body": "",
+    "links": [
+      "https://x.com/hisevenih",
+      "https://t.co/zEICTIUzKS",
+      "https://t.co/l6xL5HAeTH",
+      "https://x.com/hisevenih/status/2124391680014958666/photo/1",
+      "https://x.com/hisevenih/status/2124391680014958666",
+      "https://x.com/hisevenih/status/2124391680014958666/analytics"
+    ]
+  },
+  "github_repos": [
+    {
+      "slug": "GoogleChrome/modern-web-guidance-src",
+      "description": "Keep your coding agent up to date with the latest web best practices",
+      "diskUsage": 177908,
+      "isArchived": false,
+      "licenseInfo": {
+        "key": "apache-2.0",
+        "name": "Apache License 2.0",
+        "nickname": ""
+      },
+      "nameWithOwner": "GoogleChrome/modern-web-guidance-src",
+      "primaryLanguage": {
+        "name": "TypeScript"
+      },
+      "stargazerCount": 11265,
+      "readme_excerpt": "# <img src=\"./.github/img/modern-web-guidance.svg\" alt=\"Modern Web Guidance\" width=\"30\" height=\"30\"> Modern Web Guidance (Source)\n\nThis repo is the source repository for [GoogleChrome/modern-web-guidance](https://github.com/GoogleChrome/modern-web-guidance) and includes the code and documentation for authoring, calibrating, and evaluating its contents.\n\n[**Modern Web Guidance**](https://developer.chrome.com/docs/modern-web-guidance) is a set of skills that embed web platform expertise, best practices, and browser compatibility data directly into your coding agents. It helps to steer your coding agents away from legacy patterns, and instead toward solutions that harness the power and capabilities of the modern web platform.\n\nSee [CONTRIBUTING.md](./CONTRIBUTING.md) and [GOVERNANCE.md](./GOVERNANCE.md) for how we work on the project and orientation of the codebase.\n\n---\n\n*Stewarded by the Google Chrome, Microsoft Edge, Mozilla Firefox, and MDN teams, alongside the web development community.*\n\n[Documentation](https://developer.chrome.com/docs/modern-web-guidance) · [Eval Dashboard](https://googlechrome.github.io/modern-web-guidance-src/) · [Source Code](https://github.com/GoogleChrome/modern-web-guidance-src) · [Report an Issue](https://github.com/GoogleChrome/modern-web-guidance-src/issues)\n\n## <img src=\"https://github.com/GoogleChrome/modern-web-guidance/raw/main/.github/img/terminal.svg\" width=\"24\" height=\"24\" style=\"vertical-align: middle; margin-right: 4px;\"> Quickstart\n\n```shell\nnpx modern-web-guidance@latest install\n```\n\nThis command runs an interactive wizard to install Modern Web Guidance. See [Alternative Installation Methods](#-alternative-installation-methods) below. Requires Node.js 22 or later.\n\n#### Try it out (without installing)\n\n```shell\n# Search for relevant guides\nnpx modern-web-guidance@latest search \"animate a dialog modal backdrop\"\n\n# Retrieve a guide by ID\nnpx modern-web-guidance@latest retrieve \"animate-to-from-top-layer\"\n\n# Scan a codebase for legacy patterns to modernize\nnpx modern-web-guidance@latest legacy-scan .\n```\n\n## <img src=\"https://github.com/GoogleChrome/modern-web-guidance/raw/main/.github/img/lightbulb.svg\" width=\"24\" height=\"24\" style=\"vertical-align: middle; margin-right: 4px;\"> Why?\n\nCoding agents often default to older patterns because LLM training data contains vast amounts of legacy code. This often leads them to generate bloated JavaScript for tasks that now have native, high-performance web platform solutions.\n\nEven if a model knows an API exists, it often lacks the density of real-world, modern implementation patterns required for production-ready code.\n\n**Modern Web Guidance bridges this gap.** Our skill's CLI returns targeted, expert-curated guidelines directly into your agent's context window, focusing on:\n* **Modern Browser APIs**: Helping models correctly structure APIs they frequently misuse.\n* **Performance & Accessibility**: Preferring platform-level APIs that can be optimized by the browser and include built-in accessibility affordances.\n* **Responsible Fallbacks**: Guiding models to use sensible, lightweight fallbacks instead of heavy polyfills or legacy libraries.\n\n## <img src=\"https://github.com/GoogleChrome/modern-web-guidance/raw/main/.github/img/package.svg\" width=\"24\" height=\"24\" style=\"vertical-align: middle; margin-right: 4px;\"> What's Included?\n\nWe cover the past several years of the web platform's new features, all the way up to the cutting edge. The guides are **designed to be token-efficient**; we run evals enabling us to prune lowest-common-denominator content that models already know.\n\n### Core Disciplines\n\n<table width=\"100%\" style=\"border-collapse: collapse; border: none;\">\n  <tr style=\"border: none;\">\n    <td width=\"33%\" valign=\"top\" style=\"border: none; padding: 6px;\">\n      <h4>🎨 User Experience</h4>\n      <p style=\"font-size: 0.9em; line-height: 1.4;\">Smooth visual states (View Transitions, entry/exit animations, parallax scroll, CSS <code>scrollbar-color</code>).</p>\n    </td>\n    <td width=\"33%\" valign=\"top\" style=\"border: none; padding: 6px;\">\n      <h4>📐 CSS Layout</h4>\n      <p style=\"font-size: 0.9em; line-height: 1.4;\">Modern layout systems (container queries, <code>subgrid</code>, modern color spaces like <code>oklch</code>, text-wrap tuning, and line-height trimming).</p>\n    </td>\n    <td width=\"33%\" valign=\"top\" style=\"border: none; padding: 6px;\">\n      <h4>⚡ Performance</h4>\n      <p style=\"font-size: 0.9em; line-height: 1.4;\">S"
+    }
+  ],
+  "fact_card": {
+    "title_zh": "面向编程智能体的现代 Web 最佳实践技能插件与 CLI",
+    "title_en": "Modern Web Guidance skill plugin and CLI for coding agents",
+    "github_repo_slug": "GoogleChrome/modern-web-guidance-src",
+    "github_repo_verified_by_gh": true,
+    "claimed_artifact": "GoogleChrome/modern-web-guidance-src",
+    "artifact_type": "github_repo",
+    "claimed_steps_en": [
+      "Run `npx modern-web-guidance@latest install` to run the interactive installation wizard.",
+      "Run `npx modern-web-guidance@latest search \"animate a dialog modal backdrop\"` to search for relevant guides.",
+      "Run `npx modern-web-guidance@latest retrieve \"animate-to-from-top-layer\"` to retrieve a guide by ID.",
+      "Run `npx modern-web-guidance@latest legacy-scan .` to scan a codebase for legacy patterns to modernize."
+    ],
+    "verification_goal_en": "Run the modern-web-guidance CLI with Node.js 22+, test the search, retrieve, and legacy-scan commands on a sample codebase, and verify its installation and guideline retrieval behavior.",
+    "detected_requirements_en": [
+      "Node.js 22 or later"
+    ],
+    "proposed_node": "ubuntu_rtx5060",
+    "estimated_minutes": 15
+  },
+  "gate": {
+    "verdict": "GO",
+    "reason": "all_9_slots_passed",
+    "model": "jev-1.14.0",
+    "usage": {
+      "input_tokens": 3022,
+      "output_tokens": 218
+    },
+    "yes_threshold": 0.7,
+    "no_threshold": 0.3,
+    "slots": [
+      {
+        "id": "has_concrete_runnable_target",
+        "role": "positive",
+        "label_zh": "是否存在可由 Agent 实测验证的公开开源 GitHub 库",
+        "question": "Is `fact_card.github_repo_verified_by_gh` true with a non-empty `fact_card.github_repo_slug`, and does `fact_card` list concrete commands, deployments, prompts, or agent tasks in `fact_card.claimed_steps_en` that an agent can run or empirically test?",
+        "criteria_true": "`github_repo_verified_by_gh` is true and `claimed_steps_en` / `verification_goal_en` provide concrete commands, deployments, skills, or prompts an agent can run or test.",
+        "criteria_false": "`github_repo_verified_by_gh` is false, or there are no concrete commands, skills, prompts, or tasks an agent can execute or empirically test.",
+        "expected": ">= 0.7",
+        "score": 0.98,
+        "zone": "YES",
+        "passed": true
+      },
+      {
+        "id": "has_falsifiable_claim",
+        "role": "positive",
+        "label_zh": "是否包含可观测/可证伪结论或步骤",
+        "question": "Does `fact_card` state concrete steps, behavior, or performance claims that an agent can run and observe to confirm or falsify within one test session?",
+        "criteria_true": "Steps or behavioral/performance claims can be verified directly by running commands, benchmarks, prompts, or UI interactions.",
+        "criteria_false": "Claims are subjective, metaphysical, multi-month business forecasts, or impossible to observe in a technical test.",
+        "expected": ">= 0.7",
+        "score": 0.98,
+        "zone": "YES",
+        "passed": true
+      },
+      {
+        "id": "has_engineering_value",
+        "role": "positive",
+        "label_zh": "实测结果是否具备工程交流价值",
+        "question": "Would running and verifying this target produce concrete technical findings (real measurements, compatibility edge cases, reproducibility verdict, or practical pitfalls) useful to software builders?",
+        "criteria_true": "Producing real numbers, compatibility notes, or a reproducibility report gives meaningful engineering insight.",
+        "criteria_false": "Trivial toy spam, engagement bait, or uninformative marketing copy with no real engineering takeaway.",
+        "expected": ">= 0.7",
+        "score": 0.87,
+        "zone": "YES",
+        "passed": true
+      },
+      {
+        "id": "requires_paid_or_new_account",
+        "role": "blocker",
+        "label_zh": "是否需要付费、绑卡、新注册或缺失凭据",
+        "question": "Does verifying `fact_card` require paying money, binding a credit card, registering a brand-new user account/phone/KYC, or using an API key/credential absent from `capabilities`?",
+        "criteria_true": "Testing requires a paid subscription/credit purchase not listed in `capabilities`, creating a new account/login wall, or private third-party credentials.",
+        "criteria_false": "Public, free/open-source, or runs using only tools/frontier CLIs already listed in `capabilities` without new signups or payments.",
+        "expected": "<= 0.3",
+        "score": 0.06,
+        "zone": "NO",
+        "passed": true
+      },
+      {
+        "id": "requires_unavailable_hardware_or_os",
+        "role": "blocker",
+        "label_zh": "是否超出本机与远程节点硬件/系统能力",
+        "question": "Does verifying `fact_card` require hardware, VRAM, OS, or physical devices missing from `capabilities.available_nodes` (for instance multi-GPU H100 cluster, >8GB VRAM x86-only CUDA if not runnable on 61GB ARM64 Orin, Windows-only GUI, or physical mobile phones)?",
+        "criteria_true": "Requires hardware/OS unavailable across all listed nodes (e.g., 80GB H100, Windows-only driver, physical Android device).",
+        "criteria_false": "Fits comfortably within at least one node in `capabilities.available_nodes`.",
+        "expected": "<= 0.3",
+        "score": 0.05,
+        "zone": "NO",
+        "passed": true
+      },
+      {
+        "id": "exceeds_120min_or_needs_offline_action",
+        "role": "blocker",
+        "label_zh": "是否超过 2 小时时限或需要线下物理动作",
+        "question": "Would a minimal faithful verification of `fact_card` realistically take more than 120 minutes total (e.g. downloading huge >40GB datasets, multi-hour model pretraining, waiting days) or require human offline physical actions?",
+        "criteria_true": "Minimal verification exceeds 120 minutes or requires offline physical human intervention.",
+        "criteria_false": "Setup plus meaningful test verification can complete cleanly well within 120 minutes.",
+        "expected": "<= 0.3",
+        "score": 0.04,
+        "zone": "NO",
+        "passed": true
+      },
+      {
+        "id": "endangers_hardware_or_host_stability",
+        "role": "blocker",
+        "label_zh": "是否可能危及硬件或宿主机系统稳定性",
+        "question": "Could running `fact_card` endanger physical hardware or host stability (overclocking, firmware/BIOS flashing, thermal burn-in, kernel-level modifications, privileged root host scripts outside containers, or stealing macOS desktop GUI focus)?",
+        "criteria_true": "Involves flashing firmware, kernel modules, overclocking, destructive disk/network tests, or modifying host OS files outside a sandbox.",
+        "criteria_false": "Runs safely inside an ephemeral user-space container, temp dir, or clean browser sandbox without risking hardware or host stability.",
+        "expected": "<= 0.3",
+        "score": 0.03,
+        "zone": "NO",
+        "passed": true
+      },
+      {
+        "id": "triggers_software_risk_control_or_tos_violation",
+        "role": "blocker",
+        "label_zh": "是否涉及平台风控对抗或违反服务条款",
+        "question": "Does verifying `fact_card` involve bypassing anti-bot checks/CAPTCHAs/paywalls/rate-limits, automated scraping of logged-in personal accounts, mass engagement/account-farming bots, or violating platform ToS in a way that risks account/IP bans?",
+        "criteria_true": "Involves bypassing security/anti-bot/paywall/DRM checks, scraping gated platforms, or running engagement/farming automation.",
+        "criteria_false": "Normal open-source local execution or visiting public unauthenticated web demos in a clean sandbox.",
+        "expected": "<= 0.3",
+        "score": 0.03,
+        "zone": "NO",
+        "passed": true
+      },
+      {
+        "id": "violates_ethics_business_or_law",
+        "role": "blocker",
+        "label_zh": "是否违背人类伦理、商业道德或法律法规",
+        "question": "Does the target or test involve malware, weaponized exploits, phishing, copyright piracy, unauthorized private-data extraction, fraud, harassment, or illegal/unethical activity?",
+        "criteria_true": "Involves malicious, deceptive, privacy-violating, infringing, or illegal tooling or behavior.",
+        "criteria_false": "Legitimate open-source software, engineering workflows, benchmarks, or lawful public web demos.",
+        "expected": "<= 0.3",
+        "score": 0.02,
+        "zone": "NO",
+        "passed": true
+      }
+    ],
+    "failed_slots": [],
+    "raw_answers": {
+      "has_concrete_runnable_target": {
+        "type": "noul",
+        "noul": 0.98
+      },
+      "has_falsifiable_claim": {
+        "type": "noul",
+        "noul": 0.98
+      },
+      "has_engineering_value": {
+        "type": "noul",
+        "noul": 0.87
+      },
+      "requires_paid_or_new_account": {
+        "type": "noul",
+        "noul": 0.06
+      },
+      "requires_unavailable_hardware_or_os": {
+        "type": "noul",
+        "noul": 0.05
+      },
+      "exceeds_120min_or_needs_offline_action": {
+        "type": "noul",
+        "noul": 0.04
+      },
+      "endangers_hardware_or_host_stability": {
+        "type": "noul",
+        "noul": 0.03
+      },
+      "triggers_software_risk_control_or_tos_violation": {
+        "type": "noul",
+        "noul": 0.03
+      },
+      "violates_ethics_business_or_law": {
+        "type": "noul",
+        "noul": 0.02
+      }
+    }
+  }
+}
