@@ -162,7 +162,7 @@ python3 /work/repo/audit.py <key-env-flag> --url http://localhost:18081 --model 
 - 独立 audit.py 仅需 Python 标准库和 curl，但仓库自带的 tests/ 目录包含 29 个基于 pytest 的测试模块（最小容器中未预装 pytest 会全部导入报错）。
 - 最小化容器缺少 nslookup 时 Step 1 的 CNAME 检查会输出缺失提示；在毫秒级响应的 localhost 环境下，Step 13 延迟方差探针因微秒级波动易判为 variable（CV=0.26~0.34）。
 
-### 拟引用推文草稿（一期仅存档，不自动发送）
-> 专门给 LLM API 中继站做安全体检的工具，单文件零三方依赖，用 Python 标准库和 curl 就能跑，20 多秒完成 14 步探针，能抓出包名篡改、SSE 异常和 Web3 私钥诱导。建议直接拉 master 分支，同标 2.5.0 但比 tag v2.5.0 多了 _check_event_stream 等修复。
+### 拟引用推文草稿
+> 用第三方 API 中转站怕被截断或偷换模型，安利这工具：零依赖单文件 21–28 秒就能揪出虚报 token 和 Web3 私钥诱导！建议直接拉 master，比 v2.5.0 多了事件流修复，极简容器记得装 nslookup。
 > 
 > 实测记录：https://github.com/lauzhihao/x-repro-lab/issues/1
