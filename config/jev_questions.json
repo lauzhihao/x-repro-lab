@@ -19,21 +19,24 @@
   "questions": {
     "has_concrete_runnable_target": {
       "role": "positive",
-      "label_zh": "是否存在可部署/可运行的公开开源 GitHub 库",
+      "label_zh": "是否存在可由 Agent 实测验证的公开开源 GitHub 库",
       "type": "noul",
       "instructions": {
-        "question": "Does `fact_card` name a concrete public open-source GitHub repository that can be cloned/downloaded, built or deployed, and executed directly in a sandbox?",
-        "inspect": "`fact_card.claimed_artifact`, `fact_card.artifact_type`, `fact_card.claimed_steps_en`",
-        "focus": "Pure opinions, news without a public runnable GitHub repository, or closed SaaS teasers must be false."
+        "question": "Does `fact_card` name a concrete public open-source GitHub repository that an agent can clone/install and empirically verify — either runnable software/CLI/Docker service OR an agent skill, coding plugin, prompt library, rulebook, or evaluation suite testable on concrete tasks?",
+        "inspect": "`fact_card.claimed_artifact`, `fact_card.artifact_type`, `fact_card.claimed_steps_en`, `fact_card.verification_goal_en`",
+        "focus": "Pure opinions, news without a public GitHub repository, or closed SaaS teasers must be false; runnable repos AND agent-testable prompt/skill/plugin/rule repositories must be true."
       },
       "criteria": {
         "true": {
-          "what": "A specific public open-source GitHub repository with runnable code, CLI, or container deployment is identified.",
-          "examples": ["An open-source CLI or service repository on GitHub with install/run instructions."]
+          "what": "A specific public open-source GitHub repository exists that an agent can clone/install and verify via execution, benchmark, or empirical A/B prompt/skill task runs.",
+          "examples": [
+            "An open-source CLI or service repository on GitHub with install/run instructions.",
+            "An open-source AI agent skill, coding plugin, or prompt library testable by installing it and running concrete coding/eval tasks."
+          ]
         },
         "false": {
-          "what": "No runnable public GitHub repository exists; only news, opinion, announcement, or closed product teaser.",
-          "not_for": "A post containing a concrete runnable GitHub repository."
+          "what": "No verifiable public GitHub repository exists; only news, opinion, announcement, or closed product teaser.",
+          "not_for": "A post containing a concrete runnable GitHub repository or agent-testable skill/prompt/plugin repository."
         }
       }
     },

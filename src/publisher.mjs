@@ -30,7 +30,8 @@ export function buildIssueMarkdown({ meta, jevData, planMd, executionMd, resultD
   lines.push(`- **全局追踪 ID (\`run_id\`)**: \`${meta.run_id}\``);
   lines.push(`- **当前终态**: \`${meta.status}\`（实测结论: \`${resultData?.verdict || meta.status}\`）`);
   lines.push(`- **原帖链接**: ${post.url || meta.post_url || ''}`);
-  lines.push(`- **原帖作者**: @${post.author || meta.post_author || 'unknown'}`);
+  const authorHandle = String(post.author || meta.post_author || '').replace(/^@/, '').trim();
+  lines.push(`- **原帖作者**: ${authorHandle ? `[@${authorHandle}](https://x.com/${authorHandle})` : 'unknown'}`);
   lines.push(`- **原帖标题/主题**: ${postTitle}`);
   lines.push(`- **执行节点**: \`${meta.node || f.proposed_node || 'ubuntu_rtx5060'}\``);
   lines.push(`- **SLA 计时**: 决定引用 \`${meta.decided_at}\` -> 结束 \`${meta.finished_at}\`（耗时 **${meta.elapsed_minutes ?? '?'} 分钟** / 上限 ${meta.sla_minutes || 120} 分钟）`);
