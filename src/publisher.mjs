@@ -4,6 +4,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { LAB_ROOT, loadLocalConfig, proxyEnv } from './config.mjs';
 import { sanitizeText, sanitizeRunDir, auditTexts, auditGitStaged } from './privacy_guard.mjs';
 import { appendEvent, appendHistory, loadMeta, saveMeta } from './trace.mjs';
+import { draftQuote } from './quote_drafter.mjs';
 
 function verdictLabel(status, verdict) {
   if (status === 'timed_out') return 'timed-out';
@@ -15,7 +16,7 @@ function verdictLabel(status, verdict) {
   return 'plain-pass';
 }
 
-export function buildIssueMarkdown({ meta, jevData, planMd, executionMd, resultData, repo }) {
+export function buildIssueMarkdown({ meta, jevData, planMd, executionMd, resultData, quoteDraftText = '', repo }) {
   const f = jevData?.fact_card || {};
   const gate = jevData?.gate || {};
   const post = jevData?.post || {};
@@ -77,8 +78,14 @@ export function buildIssueMarkdown({ meta, jevData, planMd, executionMd, resultD
   lines.push('## 四、执行结果与实测数据');
   lines.push('');
   if (resultData) {
-    lines.push(`- **是否符合原帖预期**: \`${resultData.matches_claim === true ? '是（符合）' : resultData.matches_claim === false ? '否（存在偏差/证伪）' : '未完成验证'}\``);
+    if (resultData.what_it_does_zh) lines.push(`- **项目定位**: ${resultData.what_it_does_zh}`);
+    lines.push(`- **是否可成功部署运行**: \`${resultData.matches_claim === true ? '是（已跑通）' : resultData.matches_claim === false ? '否（存在偏差/未跑通）' : '未完成'}\``);
     lines.push(`- **结果摘要**: ${resultData.summary_zh || resultData.summary || ''}`);
+    if (Array.isArray(resultData.highlights) && resultData.highlights.length) {
+      lines.push('');
+      lines.push('### 实测亮点');
+      for (const h of resultData.highlights) lines.push(`- ${h}`);
+    }
     if (Array.isArray(resultData.metrics) && resultData.metrics.length) {
       lines.push('');
       lines.push('| 指标项 | 原帖声称 | 我方实测 | 备注 |');
@@ -96,14 +103,16 @@ export function buildIssueMarkdown({ meta, jevData, planMd, executionMd, resultD
     }
     if (Array.isArray(resultData.gotchas) && resultData.gotchas.length) {
       lines.push('');
-      lines.push('### 真实踩坑点');
+      lines.push('### 上手提醒 / 踩坑点');
       for (const g of resultData.gotchas) lines.push(`- ${g}`);
     }
-    if (resultData.quote_candidate_zh || resultData.quote_candidate_en) {
+    const quoteBody = quoteDraftText || resultData.quote_candidate_zh || '';
+    if (quoteBody) {
       lines.push('');
-      lines.push('### 候选 Quote 草稿（一期仅存档，不自动发送）');
-      if (resultData.quote_candidate_zh) lines.push(`- 中文草稿: ${resultData.quote_candidate_zh}`);
-      if (resultData.quote_candidate_en) lines.push(`- English draft: ${resultData.quote_candidate_en}`);
+      lines.push('### 拟引用推文草稿（一期仅存档，不自动发送）');
+      for (const l of String(quoteBody).split('\n')) {
+        lines.push(`> ${l}`);
+      }
     }
   } else {
     lines.push(`- 任务以 \`${meta.status}\` 结束（原因: \`${meta.error || meta.cancel_reason || 'unknown'}\`），已执行无残留清理。`);
@@ -140,8 +149,6 @@ export function publishRun(runDir, { dry = false } = {}) {
   saveMeta(runDir, meta);
 
   const jevData = readOptJson('jev.json');
-  const planMd = readOptText('plan.md');
-  const executionMd = readOptText('execution.md');
   const resultData = readOptJson('result.json');
 
   // 1. Scrub all text files under runDir and build scrubbed issue body
@@ -152,6 +159,7 @@ export function publishRun(runDir, { dry = false } = {}) {
     planMd: readOptText('plan.md'),
     executionMd: readOptText('execution.md'),
     resultData: readOptJson('result.json'),
+    quoteDraftText: readOptText('quote_draft.txt'),
     repo,
   });
   const issueBody = sanitizeText(rawBody);
@@ -192,6 +200,16 @@ export function publishRun(runDir, { dry = false } = {}) {
   const numMatch = issueUrl.match(/\/issues\/(\d+)/);
   const issueNumber = numMatch ? Number(numMatch[1]) : null;
 
+  // 3. For positive completed runs, draft an enthusiastic follower-facing Quote referencing the real Issue URL
+  let quoteDraft = null;
+  if (meta.status === 'completed' && resultData && issueUrl) {
+    try {
+      quoteDraft = redraftQuote(runDir, { issueUrl, issueNumber });
+    } catch (qErr) {
+      appendEvent(runDir, meta.run_id, { type: 'quote_draft_warn', error: String(qErr?.message || qErr) });
+    }
+  }
+
   if (['failed', 'timed_out', 'cancelled'].includes(meta.status) && issueNumber) {
     spawnSync(
       'gh',
@@ -200,7 +218,61 @@ export function publishRun(runDir, { dry = false } = {}) {
     );
   }
 
-  appendEvent(runDir, meta.run_id, { type: 'published', issue_url: issueUrl, issue_number: issueNumber, labels });
-  appendHistory({ run_id: meta.run_id, status: meta.status, verdict: vLabel, node: meta.node, issue_url: issueUrl, issue_number: issueNumber, title: safeTitle });
-  return { issue_url: issueUrl, issue_number: issueNumber, title: safeTitle, labels };
+  appendEvent(runDir, meta.run_id, { type: 'published', issue_url: issueUrl, issue_number: issueNumber, labels, quote_drafted: !!quoteDraft });
+  appendHistory({ run_id: meta.run_id, status: meta.status, verdict: vLabel, node: meta.node, issue_url: issueUrl, issue_number: issueNumber, title: safeTitle, quote_drafted: !!quoteDraft });
+  return { issue_url: issueUrl, issue_number: issueNumber, title: safeTitle, labels, quote_draft: quoteDraft };
+}
+
+export function redraftQuote(runDir, { issueUrl = '', issueNumber = null } = {}) {
+  const local = loadLocalConfig();
+  const repo = local.github_repo || 'lauzhihao/x-repro-lab';
+  const meta = loadMeta(runDir);
+  const readOptJson = (name) => {
+    const p = path.join(runDir, name);
+    return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : null;
+  };
+  const readOptText = (name) => {
+    const p = path.join(runDir, name);
+    return fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : '';
+  };
+
+  const jevData = readOptJson('jev.json');
+  const resultData = readOptJson('result.json');
+  const quoteDraft = draftQuote({
+    post: jevData?.post,
+    factCard: jevData?.fact_card,
+    resultData,
+    issueUrl,
+  });
+  if (!quoteDraft) return null;
+
+  fs.writeFileSync(path.join(runDir, 'quote_draft.txt'), quoteDraft + '\n', 'utf8');
+  const bodyFile = path.join(runDir, 'issue_body.md');
+  const updatedBody = sanitizeText(buildIssueMarkdown({
+    meta,
+    jevData,
+    planMd: readOptText('plan.md'),
+    executionMd: readOptText('execution.md'),
+    resultData,
+    quoteDraftText: quoteDraft,
+    repo,
+  }));
+  fs.writeFileSync(bodyFile, updatedBody, 'utf8');
+  auditTexts({ issue_body: updatedBody, quote_draft: quoteDraft });
+
+  const env = proxyEnv();
+  execFileSync('git', ['-C', LAB_ROOT, 'add', '--', `runs/${meta.run_id}/quote_draft.txt`, `runs/${meta.run_id}/issue_body.md`], { encoding: 'utf8' });
+  auditGitStaged(LAB_ROOT);
+  const staged = execFileSync('git', ['-C', LAB_ROOT, 'diff', '--cached', '--name-only'], { encoding: 'utf8' }).trim();
+  if (staged) {
+    execFileSync('git', ['-C', LAB_ROOT, 'commit', '-m', `lab: update quote draft for ${meta.run_id}`], { encoding: 'utf8' });
+    execFileSync('git', ['-C', LAB_ROOT, 'push', 'origin', 'HEAD:main'], { encoding: 'utf8', env, timeout: 60000 });
+  }
+  if (issueNumber) {
+    const editRes = spawnSync('gh', ['issue', 'edit', String(issueNumber), '--repo', repo, '--body-file', bodyFile], { encoding: 'utf8', env, timeout: 25000 });
+    if (editRes.status !== 0) {
+      throw new Error(`gh issue edit failed: ${(editRes.stderr || editRes.stdout || '').slice(0, 300)}`);
+    }
+  }
+  return quoteDraft;
 }

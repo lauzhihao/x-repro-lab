@@ -6,7 +6,7 @@ import { prepareIntake, extractStatusId } from './intake.mjs';
 import { evaluateJevGate } from './jev_gate.mjs';
 import { appendEvent, appendHistory, ensureRunDir, getActiveRuns, loadMeta, makeRunId, saveMeta } from './trace.mjs';
 import { teardownRun } from './teardown.mjs';
-import { publishRun } from './publisher.mjs';
+import { publishRun, redraftQuote } from './publisher.mjs';
 import { runLabWorker } from './worker.mjs';
 
 function flagVal(args, name) {
@@ -105,6 +105,15 @@ async function cmdEvaluate({ url, postJsonPath = null }) {
       gate: null,
     };
   }
+  if (intake.noGithubRepo) {
+    return {
+      verdict: 'NO_GO',
+      stage: 'github_repo_filter',
+      reason: 'no_public_github_repo',
+      intake,
+      gate: null,
+    };
+  }
   const gate = evaluateJevGate(intake.factCardForJev);
   return {
     verdict: gate.verdict,
@@ -182,8 +191,17 @@ try {
         try { fs.unlinkSync(tmpPost); } catch {}
       }
     }
+  } else if (cmd === 'draft-quote') {
+    const runId = args[0];
+    if (!runId) throw new Error('usage: lab_ctl.mjs draft-quote <run_id> [--issue-url <url>] [--update-issue <num>]');
+    const runDir = path.join(RUNS_DIR, runId);
+    const issueUrl = flagVal(args, '--issue-url') || '';
+    const numRaw = flagVal(args, '--update-issue');
+    const issueNumber = numRaw ? Number(numRaw) : null;
+    const draft = redraftQuote(runDir, { issueUrl, issueNumber });
+    console.log(JSON.stringify({ run_id: runId, issue_url: issueUrl, issue_number: issueNumber, quote_draft: draft }, null, 2));
   } else {
-    console.error('usage: lab_ctl.mjs status|list|cancel|replay|evaluate|run|intake-batch');
+    console.error('usage: lab_ctl.mjs status|list|cancel|replay|evaluate|run|draft-quote|intake-batch');
     process.exitCode = 2;
   }
 } catch (err) {

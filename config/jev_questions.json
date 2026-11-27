@@ -19,21 +19,21 @@
   "questions": {
     "has_concrete_runnable_target": {
       "role": "positive",
-      "label_zh": "是否存在具体可运行/可验证对象",
+      "label_zh": "是否存在可部署/可运行的公开开源 GitHub 库",
       "type": "noul",
       "instructions": {
-        "question": "Does `fact_card` name a concrete runnable or directly testable target (an open-source repository, installable package/CLI, reproducible command, testable prompt/workflow, or public web demo URL)?",
+        "question": "Does `fact_card` name a concrete public open-source GitHub repository that can be cloned/downloaded, built or deployed, and executed directly in a sandbox?",
         "inspect": "`fact_card.claimed_artifact`, `fact_card.artifact_type`, `fact_card.claimed_steps_en`",
-        "focus": "Pure opinions, news announcements without code/demo, or vague concepts without a concrete target must be false."
+        "focus": "Pure opinions, news without a public runnable GitHub repository, or closed SaaS teasers must be false."
       },
       "criteria": {
         "true": {
-          "what": "A specific repo, package, CLI, command, prompt workflow, or public interactive web URL is identified and testable.",
-          "examples": ["An open-source CLI benchmark repo on GitHub with install commands.", "A public HuggingFace or Vercel web demo URL."]
+          "what": "A specific public open-source GitHub repository with runnable code, CLI, or container deployment is identified.",
+          "examples": ["An open-source CLI or service repository on GitHub with install/run instructions."]
         },
         "false": {
-          "what": "No runnable artifact or testable demo/prompt exists; only news, opinion, announcement, or closed product teaser.",
-          "not_for": "A post containing a concrete GitHub repo, CLI tool, reproducible prompt, or public demo."
+          "what": "No runnable public GitHub repository exists; only news, opinion, announcement, or closed product teaser.",
+          "not_for": "A post containing a concrete runnable GitHub repository."
         }
       }
     },

@@ -155,21 +155,22 @@ function stripNonAsciiForJev(s) {
 export function extractFactCard(post, githubRepos = []) {
   const caps = loadCapabilities();
   const prompt = [
-    'You are a strict neutral technical fact clerk. Do NOT judge worthiness or make recommendations.',
-    'Extract ONLY literal facts from the X post (and any GitHub repo metadata below) into ONE valid JSON object.',
+    'You are a strict neutral technical fact clerk for open-source GitHub repository hands-on evaluation.',
+    'Extract ONLY literal facts from the X post and GitHub repo metadata into ONE valid JSON object.',
     'Keep all `*_en` fields in plain neutral English (NO Chinese characters, NO marketing hype, NO "worth quoting" advocacy).',
     'Available nodes for `proposed_node`: ubuntu_rtx5060 | orin_64g | mac_headless | ego_web_sandbox | prompt_cli.',
-    'Default to `ubuntu_rtx5060` for general CLI/Python/Node/Docker/GPU repos (<=8GB VRAM). Use `ego_web_sandbox` only for public web apps/demos without code.',
+    'Default to `ubuntu_rtx5060` for general CLI/Python/Node/Docker/GPU GitHub repos (<=8GB VRAM).',
+    'IMPORTANT for `detected_requirements_en`: list ONLY dependencies STRICTLY REQUIRED for minimal local quickstart/core deployment and testing; do NOT include optional enterprise/cloud backends (e.g., optional AWS KMS, Vault, external SaaS) that are unnecessary for running the repository locally.',
     '',
     'Required JSON keys:',
     '{',
-    '  "title_zh": "10-28 Chinese character concise title summarizing the technical topic",',
+    '  "title_zh": "10-28 Chinese character concise title summarizing what this open-source repo does",',
     '  "title_en": "concise English title",',
-    '  "claimed_artifact": "repo owner/name, CLI/package, web demo URL, or none",',
-    '  "artifact_type": "github_repo | cli_tool | web_demo | prompt_workflow | none",',
-    '  "claimed_steps_en": ["literal step or claim in English"],',
-    '  "verification_goal_en": "what single concrete test could confirm or falsify the post claims",',
-    '  "detected_requirements_en": ["explicit runtime, hardware, account, payment, API key, or OS dependencies"],',
+    '  "claimed_artifact": "GitHub repo owner/name",',
+    '  "artifact_type": "github_repo",',
+    '  "claimed_steps_en": ["literal clone, install, deploy, and test steps from README/post in English"],',
+    '  "verification_goal_en": "what concrete local deployment, execution, and feature benchmark will test this open-source repo",',
+    '  "detected_requirements_en": ["ONLY strictly required runtime, hardware, account, payment, API key, or OS dependencies"],',
     '  "proposed_node": "ubuntu_rtx5060 | orin_64g | mac_headless | ego_web_sandbox | prompt_cli",',
     '  "estimated_minutes": 20',
     '}',
@@ -245,8 +246,11 @@ export function prepareIntake({ url, postInput = null }) {
   );
   const githubRepos = fetchGithubContext(post);
   if (staticCheck.blocked) {
-    return { post, githubRepos, staticCheck, factCard: null, factCardForJev: null };
+    return { post, githubRepos, staticCheck, noGithubRepo: false, factCard: null, factCardForJev: null };
+  }
+  if (!githubRepos.length) {
+    return { post, githubRepos, staticCheck, noGithubRepo: true, factCard: null, factCardForJev: null };
   }
   const { factCard, factCardForJev } = extractFactCard(post, githubRepos);
-  return { post, githubRepos, staticCheck, factCard, factCardForJev };
+  return { post, githubRepos, staticCheck, noGithubRepo: false, factCard, factCardForJev };
 }
