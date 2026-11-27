@@ -293,6 +293,6 @@ $ rm -rf /tmp/xrl-lab-20261127-095304-680014958666-fa7c0d
 - 源码仓库安装与构建陷阱：pnpm install 在 onnxruntime-node@1.30.0 postinstall 阶段因远程构建列表返回 HTTP 302 失败，需加 --ignore-scripts；同时 build-dist.ts 与部分单元测试强依赖 .git 仓库和 git 命令。
 
 ### 拟引用推文草稿（一期仅存档，不自动发送）
-> 刚在容器里把这套现代 Web 最佳实践 CLI 跑通，专门拦住 AI 写老旧前端套路并自动补齐兼容回退，常驻摘要仅 904 字节，search 和 legacy-scan 热启动 1.2–1.6 秒就出结果。不过无 git 的精简容器跑 install 会报错，且 search 目前只支持英文关键词。
+> Chrome 联合 Edge 等团队做的这套前端技能包，装进编程 AI 专治总写过时 API 的毛病，平时只占 904 字节几乎不烧上下文，1.2–1.6 秒就能搜出原生新写法并配齐回退代码。注意两个坑：环境没装 git 时 install 会报错失败，且检索只认英文词，输中文会返回空。
 > 
 > 实测记录：https://github.com/lauzhihao/x-repro-lab/issues/3
