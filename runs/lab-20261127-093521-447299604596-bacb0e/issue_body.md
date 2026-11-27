@@ -251,7 +251,7 @@ WS_LIVE_FRAMES: 34 WS_LAST_SNAPSHOT: { totalConnections: 4, totalUpload: 2937000
 - 源码模式下若直接单独运行 collector 的 Vitest 单测会报找不到共享包入口，必须先构建 @neko-master/shared 包后再执行测试。
 - 仓库内置自动存量连接基线过滤（重启采集时不重复统计已建立连接的累计字节），但 Surge 网关的测试连接/健康检查接口对响应字段要求比 /v1/requests/recent 轮询更严格，若后端健康灯标红但流量仍有更新，通常是健康检查端点返回格式不匹配所致。
 
-### 拟引用推文草稿（一期仅存档，不自动发送）
-> 把 Clash/Mihomo、Surge 和远程 Agent 的实时流量与规则链路收进一个面板，查异常连接直观太多了！拉下来跑通三路并发采集，冷启动约 0.42 秒、内存 270.5 MiB，接口响应都在 12ms 内；注意仓库自带的是 macOS arm64 的 Agent，Linux 记得换 release 或重编。
+### 拟引用推文草稿
+> 多台Clash/Surge搞不清谁在吃流量，Neko Master真能打！三路并发才占270.5 MiB内存、12ms内出图，小机器毫无压力，不过仓库里的agent只有macOS arm64版，Linux得换包或重编。
 > 
 > 实测记录：https://github.com/lauzhihao/x-repro-lab/issues/2
