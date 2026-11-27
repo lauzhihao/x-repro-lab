@@ -114,3 +114,4 @@
 {"seq":114,"ts":"2026-11-27T02:05:35.948Z","run_id":"lab-20261127-095304-680014958666-fa7c0d","type":"teardown","step":"ubuntu_cleanup","status":"cleaned","exit":0}
 {"seq":115,"ts":"2026-11-27T02:05:35.952Z","run_id":"lab-20261127-095304-680014958666-fa7c0d","type":"teardown","step":"local_tmp_cleanup","status":"removed"}
 {"seq":116,"ts":"2026-11-27T02:05:35.954Z","run_id":"lab-20261127-095304-680014958666-fa7c0d","type":"run_finished","status":"completed","elapsed_minutes":13.1}
+{"seq":117,"ts":"2026-11-27T02:06:20.732Z","run_id":"lab-20261127-095304-680014958666-fa7c0d","type":"published","issue_url":"https://github.com/lauzhihao/x-repro-lab/issues/3","issue_number":3,"labels":["lab-run","gotcha","ubuntu-rtx5060"],"quote_drafted":true}
