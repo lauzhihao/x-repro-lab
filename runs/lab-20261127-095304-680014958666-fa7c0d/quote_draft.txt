@@ -1,0 +1,3 @@
+刚在容器里把这套现代 Web 最佳实践 CLI 跑通，专门拦住 AI 写老旧前端套路并自动补齐兼容回退，常驻摘要仅 904 字节，search 和 legacy-scan 热启动 1.2–1.6 秒就出结果。不过无 git 的精简容器跑 install 会报错，且 search 目前只支持英文关键词。
+
+实测记录：https://github.com/lauzhihao/x-repro-lab/issues/3

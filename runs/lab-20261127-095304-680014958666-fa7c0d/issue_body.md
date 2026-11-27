@@ -291,3 +291,8 @@ $ rm -rf /tmp/xrl-lab-20261127-095304-680014958666-fa7c0d
 - search 仅支持英文查询：输入中文关键词（如“弹窗背景动画”）返回空数组 []，并在 stderr 提示必须使用英文检索词。
 - legacy-scan 并非全量规则扫描：当前确定性规则仅覆盖 38 个指南（52 条规则，约占全部语料的 20%），官方明确提示其余场景仍需结合 search 命令。
 - 源码仓库安装与构建陷阱：pnpm install 在 onnxruntime-node@1.30.0 postinstall 阶段因远程构建列表返回 HTTP 302 失败，需加 --ignore-scripts；同时 build-dist.ts 与部分单元测试强依赖 .git 仓库和 git 命令。
+
+### 拟引用推文草稿（一期仅存档，不自动发送）
+> 刚在容器里把这套现代 Web 最佳实践 CLI 跑通，专门拦住 AI 写老旧前端套路并自动补齐兼容回退，常驻摘要仅 904 字节，search 和 legacy-scan 热启动 1.2–1.6 秒就出结果。不过无 git 的精简容器跑 install 会报错，且 search 目前只支持英文关键词。
+> 
+> 实测记录：https://github.com/lauzhihao/x-repro-lab/issues/3
