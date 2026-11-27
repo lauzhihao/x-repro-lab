@@ -142,7 +142,7 @@ python3 /work/repo/audit.py <key-env-flag> --url http://localhost:18081 --model 
 
 ## 四、执行结果与实测数据
 
-- **是否符合原帖预期**: `是（符合）`
+- **是否可成功部署运行**: `是（已跑通）`
 - **结果摘要**: 在隔离 Docker 容器中完整复现了 toby-bridges/api-relay-audit（933 Stars，AGPL-3.0）的独立脚本下载与本地 Mock 中继审计流程，并核实 arXiv:2611.07650（六位作者均来自加拿大女王大学）在 §III-C 确实引用了该项目。基于 Python 标准库与 curl（零三方依赖），v2.5.0 单文件版与 master 版均可在 21–28 秒内完成 14 步探针并输出合规的 Markdown 与 JSON 报告，面对恶意模拟中继时能够准确捕获包名篡改、错误泄露、SSE 异常及 Web3 私钥诱导并将风险等级由 LOW 升至 HIGH。
 
 | 指标项 | 原帖声称 | 我方实测 | 备注 |
@@ -157,11 +157,12 @@ python3 /work/repo/audit.py <key-env-flag> --url http://localhost:18081 --model 
 ### 自愈修复记录
 - 容器镜像 local/claude-tokyo:ubuntu24 未安装 git 与 pytest: 改用 curl 下载 GitHub tarball 并解压以审查完整源码，并围绕独立运行的 audit.py 构建本地双模式 Mock 中继完成全量端到端验证 -> 成功完成源码审查与全部 6 组端到端审计验证
 
-### 真实踩坑点
+### 上手提醒 / 踩坑点
 - tag v2.5.0 的 audit.py（7,032 行 / 280,587 字节）与 master 分支（7,151 行 / 286,524 字节）虽版本号同为 2.5.0，但 master 额外包含 _check_event_stream 等修复。
 - 独立 audit.py 仅需 Python 标准库和 curl，但仓库自带的 tests/ 目录包含 29 个基于 pytest 的测试模块（最小容器中未预装 pytest 会全部导入报错）。
 - 最小化容器缺少 nslookup 时 Step 1 的 CNAME 检查会输出缺失提示；在毫秒级响应的 localhost 环境下，Step 13 延迟方差探针因微秒级波动易判为 variable（CV=0.26~0.34）。
 
-### 候选 Quote 草稿（一期仅存档，不自动发送）
-- 中文草稿: 实测可复现：v2.5.0 单文件靠标准库与 curl 在 24.45 秒内跑通审计，正常中继判 LOW，篡改中继触发 8 项红标判 HIGH，arXiv:2611.07650 确有女王大学引用。
-- English draft: Reproduced in Docker: standalone v2.5.0 audit.py runs in 24.45s with zero pip dependencies, scoring a clean mock relay LOW and flagging a tampering relay HIGH (8 red flags), while arXiv:2611.07650 confirms the Queen's University citation.
+### 拟引用推文草稿（一期仅存档，不自动发送）
+> 用中转 API 最怕遇到暗中换模型或截断上下文，这个开源工具专门拿来给中转站做体检。单文件零三方依赖，20 多秒跑完 14 步探针直接出报告，连 SSE 异常和 Web3 私钥诱导都能抓出来，建议直接拉 master 分支体验。
+> 
+> 实测记录：https://github.com/lauzhihao/x-repro-lab/issues/1
