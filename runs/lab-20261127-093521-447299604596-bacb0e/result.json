@@ -1,0 +1,60 @@
+{
+  "verdict": "verified_with_numbers",
+  "matches_claim": true,
+  "what_it_does_zh": "基于 Node.js 22、Fastify、SQLite 与 Next.js 的开源多网关网络流量可视化与审计面板，支持集中监控 Clash/Mihomo、Surge 及远程 Go Agent 上报的实时流量、域名、IP、规则链路与设备维度数据。",
+  "summary_zh": "在隔离的 Node 22 容器中完成源码构建、26 组单测（205 项通过、2 项跳过）及 API 路由一致性检查，随后同时接入模拟 Clash WebSocket、Surge HTTP 轮询与 gzip 压缩的远程 Agent 三路流量源。实测服务冷启动仅需约 0.42 秒、三路并发采集中内存占用仅约 270.5 MiB、统计接口响应均在 12ms 以内，且浏览器端能实时渲染多网关状态、域名排行与 React Flow 规则链路图。",
+  "highlights": [
+    "冷启动与运行时足够轻量：Collector 与 Next.js standalone 前端分别在 230ms 与 419ms 内就绪，3 个后端并发采集时容器总内存仅约 270.5 MiB（CPU 1.65%）。",
+    "多源采集与实时推送链路扎实：35 秒内稳定接收 34 帧 WebSocket 实时推送，Clash、Surge 与 Agent（支持 gzip 压缩与基于 requestId 的幂等去重）三路流量与 SQLite 落盘统计完全对齐。",
+    "开箱即用的分析与开发体验：内置 44 个前端路由与 59 个后端路由的一致性校验和 205 项后端测试，Web 面板支持多网关切换、实时趋势图、域名/IP 明细检索及 React Flow 规则链路可视化。"
+  ],
+  "metrics": [
+    {
+      "name": "依赖安装与生产构建耗时",
+      "claimed": "支持 Node.js 22 本地源码构建与运行",
+      "observed": "pnpm 安装 898 个包耗时 23.1s；shared 0s + collector 2s + web(Next.js 16) 33s",
+      "note": "在受限容器（8 vCPU / 16 GiB RAM）中按依赖顺序构建"
+    },
+    {
+      "name": "后端自动化测试与路由检查",
+      "claimed": "完整 TypeScript 全栈工程",
+      "observed": "check:api-routes 44/59 零缺失；Vitest 26 个测试文件全部通过（205 passed, 2 skipped），耗时 4s",
+      "note": "需先编译共享包再跑 collector 单测"
+    },
+    {
+      "name": "服务冷启动与运行时内存",
+      "claimed": "轻量级现代网关流量分析面板",
+      "observed": "Collector API 230ms 就绪，Web 419ms 就绪；3 后端并发采集时容器内存 270.5 MiB（空载 280.5 MiB）",
+      "note": "SQLite WAL 模式存储"
+    },
+    {
+      "name": "实时推送与统计接口延迟",
+      "claimed": "毫秒级 WebSocket 实时采集与多维流量分析",
+      "observed": "35s 实测收到 34 帧 WS 推送；汇总/域名/IP/代理/规则/趋势 API 响应 1.2ms–11.21ms",
+      "note": "通过 Next.js 同源接口转发实测"
+    },
+    {
+      "name": "三路多网关采集准确性",
+      "claimed": "统一管理 Clash、Mihomo、Surge 与 Agent 上报",
+      "observed": "Clash(4 连接 / 38.56 MB)、Surge(2 连接 / 3.94 MB)、Agent(5 连接 / 6.19 MB)，全局汇总 11 连接 / 8 域名 / 3 后端，重复 requestId 成功去重",
+      "note": "包含 30s 批量落盘校验与多网关切换"
+    }
+  ],
+  "gotchas": [
+    "源码仓库的 apps/agent 目录直接提交了一个约 8.75 MB 的 macOS arm64 可执行文件（neko-agent），Linux 或其他架构使用 Agent 时需使用对应 release 二进制或重新用 Go 1.22+ 编译。",
+    "源码模式下若直接单独运行 collector 的 Vitest 单测会报找不到共享包入口，必须先构建 @neko-master/shared 包后再执行测试。",
+    "仓库内置自动存量连接基线过滤（重启采集时不重复统计已建立连接的累计字节），但 Surge 网关的测试连接/健康检查接口对响应字段要求比 /v1/requests/recent 轮询更严格，若后端健康灯标红但流量仍有更新，通常是健康检查端点返回格式不匹配所致。"
+  ],
+  "self_healing_events": [
+    {
+      "issue": "受限容器（drop ALL capabilities）下以默认 root 执行 docker exec 写入宿主机挂载目录报 EACCES 权限错误",
+      "fix": "改用 uid 1000（node 用户）执行 docker exec 并将工具和缓存目录置于挂载目录内",
+      "outcome": "源码解压、pnpm 安装与构建均正常完成"
+    },
+    {
+      "issue": "直接运行 @neko-master/collector Vitest 单测时报错找不到 @neko-master/shared 入口",
+      "fix": "按 Dockerfile 顺序先构建 @neko-master/shared，再运行 collector 单测与后续构建",
+      "outcome": "26 个测试文件（205 项通过、2 项跳过）全部通过"
+    }
+  ]
+}

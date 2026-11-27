@@ -1,0 +1,29 @@
+{
+  "run_id": "lab-20261127-093521-447299604596-bacb0e",
+  "status": "completed",
+  "node": "ubuntu_rtx5060",
+  "title": "开源多网关网络流量监控与分析仪表盘 Neko Master",
+  "post_url": "https://x.com/0xGky/status/2124394447299604596",
+  "post_author": "0xGky",
+  "decided_at": "2026-11-27T01:34:45.885Z",
+  "started_at": "2026-11-27T01:35:21.304Z",
+  "deadline_at": "2026-11-27T03:34:45.885Z",
+  "sla_minutes": 120,
+  "pid": 80289,
+  "pgid": 80491,
+  "ego_space_id": null,
+  "screenshots": [
+    "01-overview.png",
+    "02-domains.png",
+    "03-rules.png"
+  ],
+  "executor_bin": "agy",
+  "executor_model": "gemini-pro-orchestrator-neon",
+  "child_pid": 80491,
+  "child_pgid": 80491,
+  "exit_code": 0,
+  "exit_signal": null,
+  "stream_result_status": "SUCCESS",
+  "finished_at": "2026-11-27T01:45:28.018Z",
+  "elapsed_minutes": 10.7
+}
