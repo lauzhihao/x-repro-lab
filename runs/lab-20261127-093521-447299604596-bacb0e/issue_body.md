@@ -250,3 +250,8 @@ WS_LIVE_FRAMES: 34 WS_LAST_SNAPSHOT: { totalConnections: 4, totalUpload: 2937000
 - 源码仓库的 apps/agent 目录直接提交了一个约 8.75 MB 的 macOS arm64 可执行文件（neko-agent），Linux 或其他架构使用 Agent 时需使用对应 release 二进制或重新用 Go 1.22+ 编译。
 - 源码模式下若直接单独运行 collector 的 Vitest 单测会报找不到共享包入口，必须先构建 @neko-master/shared 包后再执行测试。
 - 仓库内置自动存量连接基线过滤（重启采集时不重复统计已建立连接的累计字节），但 Surge 网关的测试连接/健康检查接口对响应字段要求比 /v1/requests/recent 轮询更严格，若后端健康灯标红但流量仍有更新，通常是健康检查端点返回格式不匹配所致。
+
+### 拟引用推文草稿（一期仅存档，不自动发送）
+> 把 Clash、Surge 和远程 Agent 的实时流量与规则链路收进一个面板，查流量去向直观很多。刚拉进 Node 22 容器跑通，冷启动仅 0.42 秒，三路并发采集内存才 270.5 MiB，统计接口响应都在 12ms 内，相当轻快。
+> 
+> 实测记录：https://github.com/lauzhihao/x-repro-lab/issues/2
