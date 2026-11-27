@@ -1,3 +1,3 @@
-把 Clash、Surge 和远程 Agent 的实时流量与规则链路收进一个面板，查流量去向直观很多。刚拉进 Node 22 容器跑通，冷启动仅 0.42 秒，三路并发采集内存才 270.5 MiB，统计接口响应都在 12ms 内，相当轻快。
+把 Clash/Mihomo、Surge 和远程 Agent 的实时流量与规则链路收进一个面板，查异常连接直观太多了！拉下来跑通三路并发采集，冷启动约 0.42 秒、内存 270.5 MiB，接口响应都在 12ms 内；注意仓库自带的是 macOS arm64 的 Agent，Linux 记得换 release 或重编。
 
 实测记录：https://github.com/lauzhihao/x-repro-lab/issues/2
