@@ -211,11 +211,14 @@ export function extractFactCard(post, githubRepos = []) {
   }
   const parsed = parseJsonObject(r.stdout);
 
+  const primaryRepo = githubRepos[0] || null;
   const factCard = {
     title_zh: String(parsed.title_zh || post.title || '技术实测').trim(),
     title_en: stripNonAsciiForJev(parsed.title_en || 'Technical verification test'),
-    claimed_artifact: stripNonAsciiForJev(parsed.claimed_artifact || 'none'),
-    artifact_type: stripNonAsciiForJev(parsed.artifact_type || 'none'),
+    github_repo_slug: primaryRepo ? primaryRepo.nameWithOwner : '',
+    github_repo_verified_by_gh: !!primaryRepo,
+    claimed_artifact: stripNonAsciiForJev(parsed.claimed_artifact || primaryRepo?.nameWithOwner || 'none'),
+    artifact_type: 'github_repo',
     claimed_steps_en: (Array.isArray(parsed.claimed_steps_en) ? parsed.claimed_steps_en : []).map(stripNonAsciiForJev).filter(Boolean),
     verification_goal_en: stripNonAsciiForJev(parsed.verification_goal_en || ''),
     detected_requirements_en: (Array.isArray(parsed.detected_requirements_en) ? parsed.detected_requirements_en : []).map(stripNonAsciiForJev).filter(Boolean),
@@ -226,6 +229,8 @@ export function extractFactCard(post, githubRepos = []) {
   // JEV receives only pure English fields
   const factCardForJev = {
     title_en: factCard.title_en,
+    github_repo_slug: factCard.github_repo_slug,
+    github_repo_verified_by_gh: factCard.github_repo_verified_by_gh,
     claimed_artifact: factCard.claimed_artifact,
     artifact_type: factCard.artifact_type,
     claimed_steps_en: factCard.claimed_steps_en,

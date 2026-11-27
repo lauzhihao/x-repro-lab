@@ -22,21 +22,16 @@
       "label_zh": "是否存在可由 Agent 实测验证的公开开源 GitHub 库",
       "type": "noul",
       "instructions": {
-        "question": "Does `fact_card` name a concrete public open-source GitHub repository that an agent can clone/install and empirically verify — either runnable software/CLI/Docker service OR an agent skill, coding plugin, prompt library, rulebook, or evaluation suite testable on concrete tasks?",
-        "inspect": "`fact_card.claimed_artifact`, `fact_card.artifact_type`, `fact_card.claimed_steps_en`, `fact_card.verification_goal_en`",
-        "focus": "Pure opinions, news without a public GitHub repository, or closed SaaS teasers must be false; runnable repos AND agent-testable prompt/skill/plugin/rule repositories must be true."
+        "question": "Is `fact_card.github_repo_verified_by_gh` true with a non-empty `fact_card.github_repo_slug`, and does `fact_card` list concrete commands, deployments, prompts, or agent tasks in `fact_card.claimed_steps_en` that an agent can run or empirically test?",
+        "inspect": "`fact_card.github_repo_verified_by_gh`, `fact_card.github_repo_slug`, `fact_card.claimed_steps_en`, `fact_card.verification_goal_en`",
+        "focus": "Both runnable software/CLI/Docker repos AND installable agent skill/prompt/plugin/guidance repos with concrete commands or empirical tasks are true; missing repo or pure opinions with no testable steps are false."
       },
       "criteria": {
         "true": {
-          "what": "A specific public open-source GitHub repository exists that an agent can clone/install and verify via execution, benchmark, or empirical A/B prompt/skill task runs.",
-          "examples": [
-            "An open-source CLI or service repository on GitHub with install/run instructions.",
-            "An open-source AI agent skill, coding plugin, or prompt library testable by installing it and running concrete coding/eval tasks."
-          ]
+          "what": "`github_repo_verified_by_gh` is true and `claimed_steps_en` / `verification_goal_en` provide concrete commands, deployments, skills, or prompts an agent can run or test."
         },
         "false": {
-          "what": "No verifiable public GitHub repository exists; only news, opinion, announcement, or closed product teaser.",
-          "not_for": "A post containing a concrete runnable GitHub repository or agent-testable skill/prompt/plugin repository."
+          "what": "`github_repo_verified_by_gh` is false, or there are no concrete commands, skills, prompts, or tasks an agent can execute or empirically test."
         }
       }
     },
