@@ -24,16 +24,17 @@ export function draftQuote({ post = {}, factCard = {}, resultData = {}, issueUrl
 
   const zh = isChineseDominant(post, factCard);
   const langInstruction = zh
-    ? '原帖是中文，请用自然地道的中文口语写 1–2 句（60–130 字），就像你亲手把项目拉下来跑通后，在 X 上热情推荐给关注者的口吻。'
-    : 'Original post is English: write 1–2 crisp, natural English sentences (90–190 characters) as a developer casually sharing a genuinely useful open-source repo you just ran with your followers.';
+    ? '原帖是中文，请用自然地道的中文口语写 1–2 句（70–140 字），就像你亲手用完后在 X 上热情安利给同行的口吻。'
+    : 'Original post is English: write 1–2 crisp, natural English sentences (100–210 characters) as a developer casually sharing a genuinely useful open-source repo you just ran with your followers.';
 
   const prompt = [
     '你是一个喜欢折腾并测评开源 GitHub 项目的开发者博主。你刚刚亲自把下面这个开源项目拉进本地/远程沙箱容器部署跑通，现在想转引（Quote Tweet）原作者的推文，用肯定、赞叹、同频安利的语气分享给你的粉丝。',
     '',
     '写作要求：',
     `- ${langInstruction}`,
-    '- 内容结构：先一句话点明「这个库是干嘛的 / 解决什么痛点」，紧接着带出 1–2 个你真实跑出来的亮点、耗时/效果数字或实用上手提示（例如建议拉哪个分支、是否零依赖）。',
-    '- 保留真实细节对比：如果 REAL_RESULT.gotchas 或 metrics 里出现了具体的版本/tag/分支差异、源码实测发现或上手注意点（比如 master 比 release tag 多补了什么具体功能或修复），务必要把“具体差在哪”用实测事实点出来，不要只写空泛的“建议拉 master 分支”——这类亲手踩出来的真实细节最能体现真的跑过。',
+    '- 第一句必须说人话讲清「给谁用、解决什么具体痛点」：假设读者没点开 README、只扫一眼转推，直接用大白话讲明白项目定位与真实使用场景（谁做的、装给谁用、治什么痛点）。不要以“刚在容器里跑通…”开头，也不要把 REAL_RESULT 里的内部缩写/黑话（如“最佳实践 CLI”、“常驻摘要”、“探针”）未经解释直接甩给读者。',
+    '- 实测数字必须挂钩人话收益：带出 1–2 个真实指标时顺带点明对使用者的意义（例如说“装进 AI 工具里只占 904 字节几乎不烧上下文”，而不是干巴巴的“常驻摘要仅 904 字节”）。',
+    '- 保留真实细节对比与上手避坑：如果 REAL_RESULT.gotchas 或 metrics 里出现了具体的版本/tag/分支差异、源码实测发现或环境/使用限制（比如 master 比 release tag 多补了什么具体功能或修复、缺 git 会报错、只支持英文检索等），务必要把“具体差在哪/踩什么坑”用实测事实点出来，不要只写空泛建议。',
     '- 严禁编造数据：所有数字、功能、版本差异只能来自下方 REAL_RESULT，不能胡编没测过的指标。',
     '- 严禁查岗/打假/质检腔：绝对不要出现“实测可复现、经核实、确有其事、确有引用、符合预期、verified reproducible、confirmed”这类居高临下核查别人真假的词。',
     '- 严禁 AI 套话：不用“赋能、闭环、底层逻辑、省心、暗礁、生产管线、第一道坎、往往、太真实了”。',
@@ -59,7 +60,7 @@ export function draftQuote({ post = {}, factCard = {}, resultData = {}, issueUrl
 
   const r = spawnSync(
     SAGY,
-    ['auto', '-p', prompt, '--model', 'gemini-4-hydrogen-low', '--disable-slash-commands', '--print-timeout', '120s'],
+    ['auto', '-p', prompt, '--model', 'gemini-4-hydrogen-medium', '--disable-slash-commands', '--print-timeout', '120s'],
     { cwd: os.tmpdir(), env: proxyEnv(), encoding: 'utf8', timeout: 140000, maxBuffer: 4 * 1024 * 1024 }
   );
   if (r.error || r.status !== 0) {
