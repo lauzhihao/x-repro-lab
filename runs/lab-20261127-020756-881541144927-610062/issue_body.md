@@ -163,6 +163,6 @@ python3 /work/repo/audit.py <key-env-flag> --url http://localhost:18081 --model 
 - 最小化容器缺少 nslookup 时 Step 1 的 CNAME 检查会输出缺失提示；在毫秒级响应的 localhost 环境下，Step 13 延迟方差探针因微秒级波动易判为 variable（CV=0.26~0.34）。
 
 ### 拟引用推文草稿（一期仅存档，不自动发送）
-> 用中转 API 最怕遇到暗中换模型或截断上下文，这个开源工具专门拿来给中转站做体检。单文件零三方依赖，20 多秒跑完 14 步探针直接出报告，连 SSE 异常和 Web3 私钥诱导都能抓出来，建议直接拉 master 分支体验。
+> 专门给 LLM API 中继站做安全体检的工具，单文件零三方依赖，用 Python 标准库和 curl 就能跑，20 多秒完成 14 步探针，能抓出包名篡改、SSE 异常和 Web3 私钥诱导。建议直接拉 master 分支，同标 2.5.0 但比 tag v2.5.0 多了 _check_event_stream 等修复。
 > 
 > 实测记录：https://github.com/lauzhihao/x-repro-lab/issues/1
