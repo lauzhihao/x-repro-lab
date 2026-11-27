@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -52,6 +53,12 @@ export function proxyEnv(extra = {}) {
   const local = loadLocalConfig();
   const p = String(local.proxy || process.env.HTTPS_PROXY || process.env.HTTP_PROXY || '').trim();
   const base = { ...process.env, ...extra };
+  const extraPaths = [path.join(os.homedir(), '.local/bin'), '/opt/homebrew/bin', path.dirname(process.execPath)];
+  const currentPaths = String(base.PATH || '').split(':').filter(Boolean);
+  for (const ep of extraPaths.reverse()) {
+    if (!currentPaths.includes(ep)) currentPaths.unshift(ep);
+  }
+  base.PATH = currentPaths.join(':');
   if (p) {
     base.HTTP_PROXY = p;
     base.HTTPS_PROXY = p;

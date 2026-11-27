@@ -87,3 +87,30 @@ export function appendHistory(entry) {
   fs.mkdirSync(RUNTIME_DIR, { recursive: true });
   fs.appendFileSync(HISTORY_FILE, JSON.stringify({ ts: new Date().toISOString(), ...entry }) + '\n', 'utf8');
 }
+
+export function loadSeenStatusIds() {
+  const seen = new Set();
+  const extract = (u) => String(u || '').match(/\/status\/(\d+)/)?.[1] || '';
+  if (fs.existsSync(RUNS_DIR)) {
+    for (const d of fs.readdirSync(RUNS_DIR)) {
+      const mPath = path.join(RUNS_DIR, d, 'meta.json');
+      if (!fs.existsSync(mPath)) continue;
+      try {
+        const m = JSON.parse(fs.readFileSync(mPath, 'utf8'));
+        const id = extract(m.post_url);
+        if (id) seen.add(id);
+      } catch {}
+    }
+  }
+  if (fs.existsSync(HISTORY_FILE)) {
+    for (const line of fs.readFileSync(HISTORY_FILE, 'utf8').split('\n')) {
+      if (!line.trim()) continue;
+      try {
+        const row = JSON.parse(line);
+        const id = extract(row.post_url);
+        if (id) seen.add(id);
+      } catch {}
+    }
+  }
+  return seen;
+}

@@ -5,6 +5,7 @@ import { LAB_ROOT, loadLocalConfig, proxyEnv } from './config.mjs';
 import { sanitizeText, sanitizeRunDir, auditTexts, auditGitStaged } from './privacy_guard.mjs';
 import { appendEvent, appendHistory, loadMeta, saveMeta } from './trace.mjs';
 import { draftQuote } from './quote_drafter.mjs';
+import { enqueueLabQuote } from './xops_bridge.mjs';
 
 function verdictLabel(status, verdict) {
   if (status === 'timed_out') return 'timed-out';
@@ -110,7 +111,7 @@ export function buildIssueMarkdown({ meta, jevData, planMd, executionMd, resultD
     const quoteBody = quoteDraftText || resultData.quote_candidate_zh || '';
     if (quoteBody) {
       lines.push('');
-      lines.push('### 拟引用推文草稿（一期仅存档，不自动发送）');
+      lines.push('### 拟引用推文草稿');
       for (const l of String(quoteBody).split('\n')) {
         lines.push(`> ${l}`);
       }
@@ -128,7 +129,7 @@ function ensureLabels(repo, labels, env) {
   }
 }
 
-export function publishRun(runDir, { dry = false } = {}) {
+export async function publishRun(runDir, { dry = false } = {}) {
   const local = loadLocalConfig();
   const repo = local.github_repo || 'lauzhihao/x-repro-lab';
   const meta = loadMeta(runDir);
@@ -203,11 +204,20 @@ export function publishRun(runDir, { dry = false } = {}) {
 
   // 3. For positive completed runs, draft an enthusiastic follower-facing Quote referencing the real Issue URL
   let quoteDraft = null;
+  let enqueued = null;
   if (meta.status === 'completed' && resultData && issueUrl) {
     try {
       quoteDraft = redraftQuote(runDir, { issueUrl, issueNumber });
     } catch (qErr) {
       appendEvent(runDir, meta.run_id, { type: 'quote_draft_warn', error: String(qErr?.message || qErr) });
+    }
+    if (quoteDraft && local.auto_publish_quote === true) {
+      try {
+        enqueued = await enqueueLabQuote({ runDir, meta: loadMeta(runDir), jevData, issueUrl, quoteDraft });
+        appendEvent(runDir, meta.run_id, { type: 'quote_enqueued', ...enqueued });
+      } catch (eqErr) {
+        appendEvent(runDir, meta.run_id, { type: 'quote_enqueue_warn', error: String(eqErr?.message || eqErr) });
+      }
     }
   }
 
@@ -219,9 +229,9 @@ export function publishRun(runDir, { dry = false } = {}) {
     );
   }
 
-  appendEvent(runDir, meta.run_id, { type: 'published', issue_url: issueUrl, issue_number: issueNumber, labels, quote_drafted: !!quoteDraft });
-  appendHistory({ run_id: meta.run_id, status: meta.status, verdict: vLabel, node: meta.node, issue_url: issueUrl, issue_number: issueNumber, title: safeTitle, quote_drafted: !!quoteDraft });
-  return { issue_url: issueUrl, issue_number: issueNumber, title: safeTitle, labels, quote_draft: quoteDraft };
+  appendEvent(runDir, meta.run_id, { type: 'published', issue_url: issueUrl, issue_number: issueNumber, labels, quote_drafted: !!quoteDraft, quote_enqueued: !!enqueued?.queued });
+  appendHistory({ run_id: meta.run_id, post_url: meta.post_url || jevData?.post?.url || '', status: meta.status, verdict: vLabel, node: meta.node, issue_url: issueUrl, issue_number: issueNumber, title: safeTitle, quote_drafted: !!quoteDraft, quote_enqueued: !!enqueued?.queued });
+  return { issue_url: issueUrl, issue_number: issueNumber, title: safeTitle, labels, quote_draft: quoteDraft, enqueued };
 }
 
 export function redraftQuote(runDir, { issueUrl = '', issueNumber = null } = {}) {

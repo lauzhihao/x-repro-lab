@@ -8,6 +8,16 @@ const SAGY = path.join(os.homedir(), '.local/bin/sagy');
 const POSITIVE_VERDICTS = new Set(['verified_with_numbers', 'verified', 'repro_with_gotcha', 'gotcha', 'plain_pass']);
 const QA_PHRASING = /(?:实测可复现|经核实|确有其事|确有引用|符合预期|verified reproducible|\bconfirmed\b)/i;
 
+export function xWeightedLength(text) {
+  const noUrl = String(text || '').replace(/https?:\/\/\S+/g, 'X'.repeat(23));
+  let total = 0;
+  for (const ch of noUrl) {
+    const cp = ch.codePointAt(0);
+    total += cp <= 0x10FF ? 1 : 2;
+  }
+  return total;
+}
+
 function isChineseDominant(post, factCard) {
   const sample = `${post?.text || ''}\n${post?.title || ''}\n${factCard?.title_zh || ''}`;
   const cjkCount = (sample.match(/[\u4e00-\u9fff]/g) || []).length;
@@ -24,8 +34,8 @@ export function draftQuote({ post = {}, factCard = {}, resultData = {}, issueUrl
 
   const zh = isChineseDominant(post, factCard);
   const langInstruction = zh
-    ? '原帖是中文，请用自然地道的中文口语写 1–2 句（70–140 字），就像你亲手用完后在 X 上热情安利给同行的口吻。'
-    : 'Original post is English: write 1–2 crisp, natural English sentences (100–210 characters) as a developer casually sharing a genuinely useful open-source repo you just ran with your followers.';
+    ? '原帖是中文，请用自然地道的中文口语写 1–2 句（65–115 字，确保加上文末记录链接后总长仍在 X 280 权重字符以内），就像你亲手用完后在 X 上热情安利给同行的口吻。'
+    : 'Original post is English: write 1–2 crisp, natural English sentences (100–190 characters) as a developer casually sharing a genuinely useful open-source repo you just ran with your followers.';
 
   const prompt = [
     '你是一个喜欢折腾并测评开源 GitHub 项目的开发者博主。你刚刚亲自把下面这个开源项目拉进本地/远程沙箱容器部署跑通，现在想转引（Quote Tweet）原作者的推文，用肯定、赞叹、同频安利的语气分享给你的粉丝。',
@@ -58,29 +68,42 @@ export function draftQuote({ post = {}, factCard = {}, resultData = {}, issueUrl
     }),
   ].join('\n');
 
-  const r = spawnSync(
-    SAGY,
-    ['auto', '-p', prompt, '--model', 'gemini-4-hydrogen-medium', '--disable-slash-commands', '--print-timeout', '120s'],
-    { cwd: os.tmpdir(), env: proxyEnv(), encoding: 'utf8', timeout: 140000, maxBuffer: 4 * 1024 * 1024 }
-  );
-  if (r.error || r.status !== 0) {
-    throw new Error(`sagy quote drafter failed (exit=${r.status}): ${(r.stderr || r.stdout || r.error?.message || '').slice(-400)}`);
+  const runModel = (promptText) => {
+    const r = spawnSync(
+      SAGY,
+      ['auto', '-p', promptText, '--model', 'gemini-4-hydrogen-medium', '--disable-slash-commands', '--print-timeout', '120s'],
+      { cwd: os.tmpdir(), env: proxyEnv(), encoding: 'utf8', timeout: 140000, maxBuffer: 4 * 1024 * 1024 }
+    );
+    if (r.error || r.status !== 0) {
+      throw new Error(`sagy quote drafter failed (exit=${r.status}): ${(r.stderr || r.stdout || r.error?.message || '').slice(-400)}`);
+    }
+    const rawLines = String(r.stdout || '')
+      .split('\n')
+      .filter((l) => !/^\[sagy\]\s+/i.test(l.trim()));
+    return sanitizeText(rawLines.join(' ').replace(/\r?\n+/g, ' ').replace(/^["'“”「」]+|["'“”「」]+$/g, '').trim());
+  };
+
+  let body = runModel(prompt);
+  if (!body) throw new Error('quote_drafter produced empty output');
+
+  const footer = issueUrl ? (zh ? `\n\n实测记录：${issueUrl}` : `\n\nFull hands-on test log: ${issueUrl}`) : '';
+  let fullDraft = `${body}${footer}`;
+  if (xWeightedLength(fullDraft) > 280) {
+    const shortenPrompt = `${prompt}\n\n【字数超限重试】：你上一版正文长度导致加上链接后超过 X 平台 280 权重字符上限。请把正文精简到 ${zh ? '100 字以内（约 200 权重字符内）' : '180 字符以内'}，同时保留核心定位、1–2 个关键实测数字和真实避坑点。\n上一版：\n${body}`;
+    const shorter = runModel(shortenPrompt);
+    if (shorter) {
+      body = shorter;
+      fullDraft = `${body}${footer}`;
+    }
   }
 
-  // Strip any [sagy] preamble line and normalize whitespace
-  const rawLines = String(r.stdout || '')
-    .split('\n')
-    .filter((l) => !/^\[sagy\]\s+/i.test(l.trim()));
-  let body = rawLines.join(' ').replace(/\r?\n+/g, ' ').replace(/^["'“”「」]+|["'“”「」]+$/g, '').trim();
-  body = sanitizeText(body);
-
-  if (!body) throw new Error('quote_drafter produced empty output');
   if (QA_PHRASING.test(body)) {
     throw new Error(`quote_drafter emitted disallowed QA phrasing: ${body}`);
   }
+  if (xWeightedLength(fullDraft) > 280) {
+    throw new Error(`quote_drafter exceeded X 280 weighted limit (${xWeightedLength(fullDraft)}): ${fullDraft}`);
+  }
 
-  const footer = issueUrl ? (zh ? `\n\n实测记录：${issueUrl}` : `\n\nFull hands-on test log: ${issueUrl}`) : '';
-  const fullDraft = `${body}${footer}`;
   auditTexts({ quote_draft: fullDraft });
   return fullDraft;
 }

@@ -275,6 +275,6 @@ export async function runLabWorker({ runId, post, jevData, decidedAt, skipExecut
     appendEvent(runDir, runId, { type: 'run_finished', status: meta.status, elapsed_minutes: meta.elapsed_minutes });
   }
 
-  const pub = publishRun(runDir, { dry: dryPublish });
+  const pub = await publishRun(runDir, { dry: dryPublish });
   return { runId, runDir, meta, published: pub };
 }

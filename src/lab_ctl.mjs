@@ -4,10 +4,11 @@ import path from 'node:path';
 import { RUNS_DIR, loadLocalConfig } from './config.mjs';
 import { prepareIntake, extractStatusId } from './intake.mjs';
 import { evaluateJevGate } from './jev_gate.mjs';
-import { appendEvent, appendHistory, ensureRunDir, getActiveRuns, loadMeta, makeRunId, saveMeta } from './trace.mjs';
+import { appendEvent, appendHistory, ensureRunDir, getActiveRuns, loadMeta, loadSeenStatusIds, makeRunId, saveMeta } from './trace.mjs';
 import { teardownRun } from './teardown.mjs';
 import { publishRun, redraftQuote } from './publisher.mjs';
 import { runLabWorker } from './worker.mjs';
+import { enqueueLabQuote } from './xops_bridge.mjs';
 
 function flagVal(args, name) {
   const i = args.indexOf(name);
@@ -58,7 +59,7 @@ async function cmdCancel(runId) {
   const details = await teardownRun(runId, { ...active, ...meta }, { runDir: fs.existsSync(runDir) ? runDir : null });
   let published = null;
   if (fs.existsSync(runDir) && !fs.existsSync(path.join(runDir, 'issue_body.md'))) {
-    try { published = publishRun(runDir); } catch (err) { published = { error: err.message }; }
+    try { published = await publishRun(runDir); } catch (err) { published = { error: err.message }; }
   }
   console.log(JSON.stringify({ cancelled: runId, teardown: details, published }, null, 2));
 }
@@ -175,17 +176,23 @@ try {
     const cap = Number(local.daily_auto_cap || 2);
     const todayPrefix = `lab-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`;
     const existingToday = fs.existsSync(RUNS_DIR) ? fs.readdirSync(RUNS_DIR).filter((d) => d.startsWith(todayPrefix)).length : 0;
+    const seenIds = loadSeenStatusIds();
     const candidates = JSON.parse(fs.readFileSync(file, 'utf8'));
     let launched = 0;
     for (const c of candidates) {
+      const sid = extractStatusId(c.url);
+      if (sid && seenIds.has(sid)) continue;
       if (existingToday + launched >= cap || Object.keys(getActiveRuns()).length >= 1) break;
       const tmpPost = `/tmp/xrl-batch-${process.pid}-${launched}.json`;
       fs.writeFileSync(tmpPost, JSON.stringify(c), 'utf8');
       try {
         const res = await cmdEvaluate({ url: c.url, postJsonPath: tmpPost });
+        if (sid) seenIds.add(sid);
         if (res.verdict === 'GO') {
           launched++;
           await cmdRun({ url: c.url, postJsonPath: tmpPost });
+        } else {
+          appendHistory({ post_url: res.intake.post.url || c.url, verdict: 'NO_GO', stage: res.stage, reason: res.reason });
         }
       } finally {
         try { fs.unlinkSync(tmpPost); } catch {}
@@ -200,8 +207,19 @@ try {
     const issueNumber = numRaw ? Number(numRaw) : null;
     const draft = redraftQuote(runDir, { issueUrl, issueNumber });
     console.log(JSON.stringify({ run_id: runId, issue_url: issueUrl, issue_number: issueNumber, quote_draft: draft }, null, 2));
+  } else if (cmd === 'enqueue-quote') {
+    const runId = args[0];
+    if (!runId) throw new Error('usage: lab_ctl.mjs enqueue-quote <run_id> [--at "YYYY-MM-DD HH:MM"] [--issue-url <url>]');
+    const runDir = path.join(RUNS_DIR, runId);
+    const meta = loadMeta(runDir);
+    const jevData = JSON.parse(fs.readFileSync(path.join(runDir, 'jev.json'), 'utf8'));
+    const quoteDraft = fs.readFileSync(path.join(runDir, 'quote_draft.txt'), 'utf8').trim();
+    const issueUrl = flagVal(args, '--issue-url') || '';
+    const explicitAt = flagVal(args, '--at') || null;
+    const res = await enqueueLabQuote({ meta, jevData, issueUrl, quoteDraft, explicitAt });
+    console.log(JSON.stringify(res, null, 2));
   } else {
-    console.error('usage: lab_ctl.mjs status|list|cancel|replay|evaluate|run|draft-quote|intake-batch');
+    console.error('usage: lab_ctl.mjs status|list|cancel|replay|evaluate|run|draft-quote|enqueue-quote|intake-batch');
     process.exitCode = 2;
   }
 } catch (err) {
